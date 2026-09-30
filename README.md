@@ -6,7 +6,7 @@ sistema web de inventario para **Distribuidora Nexo S.A. de C.V.** (empresa fict
 
 ![Dashboard](docs/capturas/02-dashboard.png)
 
-🐘 **Evidencias con DBeaver y la consola de Neon:** [`docs/GUIA_DBEAVER_NEON.md`](docs/GUIA_DBEAVER_NEON.md)
+🐘 **Evidencias con DBeaver y la consola de Neon:** [`docs/GUIA_DBEAVER_NEON.md`](docs/GUIA_DBEAVER_NEON.md) · [prompt para Claude](docs/PROMPT_CAPTURAS.md)
 
 📄 **Producto final (PDF):** [`docs/reporte/Reporte_Proyecto_U1.pdf`](docs/reporte/Reporte_Proyecto_U1.pdf) ·
 🧪 **Evidencias en texto:** [`docs/evidencias/EVIDENCIAS.md`](docs/evidencias/EVIDENCIAS.md)
