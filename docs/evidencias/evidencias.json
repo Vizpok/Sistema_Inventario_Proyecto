@@ -1,0 +1,1329 @@
+{
+  "generado": "2026-09-30T20:55:17.448Z",
+  "evidencias": [
+    {
+      "numero": 1,
+      "titulo": "Base de datos creada en Neon",
+      "secciones": [
+        {
+          "titulo": "Conexión a la base de datos en la nube",
+          "como": "owner",
+          "sentencias": [
+            {
+              "sql": "SELECT current_database() AS base_de_datos,\n       current_user       AS usuario,\n       split_part(version(), ' on ', 1) AS motor,\n       inet_server_port() AS puerto,\n       pg_size_pretty(pg_database_size(current_database())) AS tamano,\n       to_char(now() AT TIME ZONE 'America/Mexico_City', 'YYYY-MM-DD HH24:MI') AS fecha_hora_mx;",
+              "esperaError": false,
+              "comando": "SELECT",
+              "salida": "  base_de_datos  |        usuario        |           motor           | puerto | tamano  |  fecha_hora_mx  \n-----------------+-----------------------+---------------------------+--------+---------+------------------\n nexo_inventario | nexo_inventario_owner | PostgreSQL 18.6 (6569466) |   5432 | 8712 kB | 2026-09-30 14:55\n(1 fila)",
+              "filas": 1,
+              "ok": true
+            }
+          ]
+        },
+        {
+          "titulo": "Esquemas y extensiones disponibles",
+          "como": "owner",
+          "sentencias": [
+            {
+              "sql": "SELECT n.nspname AS esquema, pg_get_userbyid(n.nspowner) AS propietario\nFROM pg_namespace n\nWHERE n.nspname NOT LIKE 'pg\\_%' AND n.nspname <> 'information_schema'\nORDER BY 1;",
+              "esperaError": false,
+              "comando": "SELECT",
+              "salida": " esquema |    propietario   \n---------+-------------------\n public  | pg_database_owner\n(1 fila)",
+              "filas": 1,
+              "ok": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "numero": 2,
+      "titulo": "Diseño e implementación de las tablas",
+      "secciones": [
+        {
+          "titulo": "Tablas creadas, número de columnas y registros",
+          "como": "owner",
+          "sentencias": [
+            {
+              "sql": "SELECT c.relname AS tabla,\n       (SELECT count(*) FROM information_schema.columns col\n         WHERE col.table_schema = 'public' AND col.table_name = c.relname) AS columnas,\n       (xpath('/row/n/text()', query_to_xml(format('SELECT count(*) AS n FROM %I', c.relname), false, true, '')))[1]::text::int AS registros,\n       obj_description(c.oid, 'pg_class') AS descripcion\nFROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace\nWHERE n.nspname = 'public' AND c.relkind = 'r'\nORDER BY c.relname;",
+              "esperaError": false,
+              "comando": "SELECT",
+              "salida": "       tabla        | columnas | registros |                          descripcion                         \n--------------------+----------+-----------+---------------------------------------------------------------\n almacenes          |        5 |         3 | Almacenes / sucursales físicas                               \n bitacora           |        6 |         1 | Auditoría de acciones de los usuarios                        \n categorias         |        6 |         8 | Categorías del catálogo de productos                         \n inventario         |        5 |        99 | Existencias por producto y almacén (N:M)                     \n movimientos        |       13 |       503 | Kardex: historial de entradas y salidas                      \n producto_proveedor |        5 |        52 | Relación N:M producto-proveedor con costo y tiempo de entrega\n productos          |       13 |        37 | Catálogo de productos                                        \n proveedores        |       10 |         8 | Proveedores de mercancía                                     \n tipos_movimiento   |        5 |         9 | Motivos de entrada y salida de mercancía                     \n usuarios           |       10 |         5 | Usuarios del sistema web (rol de aplicación admin/usuario)   \n(10 filas)",
+              "filas": 10,
+              "ok": true
+            }
+          ]
+        },
+        {
+          "titulo": "Llaves primarias",
+          "como": "owner",
+          "sentencias": [
+            {
+              "sql": "SELECT tc.table_name AS tabla, tc.constraint_name AS restriccion,\n       string_agg(kcu.column_name, ', ' ORDER BY kcu.ordinal_position) AS columnas\nFROM information_schema.table_constraints tc\nJOIN information_schema.key_column_usage kcu\n  ON kcu.constraint_name = tc.constraint_name AND kcu.table_schema = tc.table_schema\nWHERE tc.table_schema = 'public' AND tc.constraint_type = 'PRIMARY KEY'\nGROUP BY tc.table_name, tc.constraint_name\nORDER BY tc.table_name;",
+              "esperaError": false,
+              "comando": "SELECT",
+              "salida": "       tabla        |      restriccion      |         columnas         \n--------------------+-----------------------+---------------------------\n almacenes          | almacenes_pkey        | id_almacen               \n bitacora           | bitacora_pkey         | id_bitacora              \n categorias         | categorias_pkey       | id_categoria             \n inventario         | pk_inventario         | id_producto, id_almacen  \n movimientos        | movimientos_pkey      | id_movimiento            \n producto_proveedor | pk_producto_proveedor | id_producto, id_proveedor\n productos          | productos_pkey        | id_producto              \n proveedores        | proveedores_pkey      | id_proveedor             \n tipos_movimiento   | tipos_movimiento_pkey | id_tipo                  \n usuarios           | usuarios_pkey         | id_usuario               \n(10 filas)",
+              "filas": 10,
+              "ok": true
+            }
+          ]
+        },
+        {
+          "titulo": "Llaves foráneas (relaciones 1:N y N:M)",
+          "como": "owner",
+          "sentencias": [
+            {
+              "sql": "SELECT conrelid::regclass  AS tabla_hija,\n       conname             AS restriccion,\n       pg_get_constraintdef(oid) AS definicion\nFROM pg_constraint\nWHERE contype = 'f' AND connamespace = 'public'::regnamespace\nORDER BY conrelid::regclass::text, conname;",
+              "esperaError": false,
+              "comando": "SELECT",
+              "salida": "     tabla_hija     |       restriccion        |                                             definicion                                             \n--------------------+--------------------------+-----------------------------------------------------------------------------------------------------\n almacenes          | fk_almacenes_responsable | FOREIGN KEY (id_responsable) REFERENCES usuarios(id_usuario) ON UPDATE CASCADE ON DELETE SET NULL  \n bitacora           | fk_bitacora_usuario      | FOREIGN KEY (id_usuario) REFERENCES usuarios(id_usuario) ON UPDATE CASCADE ON DELETE SET NULL      \n inventario         | fk_inventario_almacen    | FOREIGN KEY (id_almacen) REFERENCES almacenes(id_almacen) ON UPDATE CASCADE ON DELETE RESTRICT     \n inventario         | fk_inventario_producto   | FOREIGN KEY (id_producto) REFERENCES productos(id_producto) ON UPDATE CASCADE ON DELETE RESTRICT   \n movimientos        | fk_mov_almacen           | FOREIGN KEY (id_almacen) REFERENCES almacenes(id_almacen)                                          \n movimientos        | fk_mov_producto          | FOREIGN KEY (id_producto) REFERENCES productos(id_producto)                                        \n movimientos        | fk_mov_proveedor         | FOREIGN KEY (id_proveedor) REFERENCES proveedores(id_proveedor)                                    \n movimientos        | fk_mov_tipo              | FOREIGN KEY (id_tipo) REFERENCES tipos_movimiento(id_tipo)                                         \n movimientos        | fk_mov_usuario           | FOREIGN KEY (id_usuario) REFERENCES usuarios(id_usuario)                                           \n producto_proveedor | fk_pp_producto           | FOREIGN KEY (id_producto) REFERENCES productos(id_producto) ON UPDATE CASCADE ON DELETE CASCADE    \n producto_proveedor | fk_pp_proveedor          | FOREIGN KEY (id_proveedor) REFERENCES proveedores(id_proveedor) ON UPDATE CASCADE ON DELETE CASCADE\n productos          | fk_productos_categoria   | FOREIGN KEY (id_categoria) REFERENCES categorias(id_categoria) ON UPDATE CASCADE ON DELETE RESTRICT\n(12 filas)",
+              "filas": 12,
+              "ok": true
+            }
+          ]
+        },
+        {
+          "titulo": "Restricciones CHECK y UNIQUE",
+          "como": "owner",
+          "sentencias": [
+            {
+              "sql": "SELECT conrelid::regclass AS tabla, conname AS restriccion,\n       CASE contype WHEN 'c' THEN 'CHECK' ELSE 'UNIQUE' END AS tipo,\n       pg_get_constraintdef(oid) AS definicion\nFROM pg_constraint\nWHERE contype IN ('c', 'u') AND connamespace = 'public'::regnamespace\nORDER BY conrelid::regclass::text, contype, conname;",
+              "esperaError": false,
+              "comando": "SELECT",
+              "salida": "       tabla        |         restriccion         |  tipo  |                                                   definicion                                                   \n--------------------+-----------------------------+--------+-----------------------------------------------------------------------------------------------------------------\n almacenes          | almacenes_nombre_key        | UNIQUE | UNIQUE (nombre)                                                                                                \n categorias         | ck_categorias_color         | CHECK  | CHECK ((color ~ '^#[0-9A-Fa-f]{6}$'::text))                                                                    \n categorias         | categorias_nombre_key       | UNIQUE | UNIQUE (nombre)                                                                                                \n inventario         | ck_inventario_existencia    | CHECK  | CHECK ((existencia >= 0))                                                                                      \n movimientos        | ck_mov_cantidad             | CHECK  | CHECK ((cantidad > 0))                                                                                         \n movimientos        | ck_mov_costo                | CHECK  | CHECK ((costo_unitario >= (0)::numeric))                                                                       \n movimientos        | ck_mov_resultante           | CHECK  | CHECK ((existencia_resultante >= 0))                                                                           \n movimientos        | uq_movimientos_folio        | UNIQUE | UNIQUE (folio)                                                                                                 \n producto_proveedor | ck_pp_costo                 | CHECK  | CHECK ((costo >= (0)::numeric))                                                                                \n producto_proveedor | ck_pp_dias                  | CHECK  | CHECK ((dias_entrega >= 0))                                                                                    \n productos          | ck_productos_pcompra        | CHECK  | CHECK ((precio_compra >= (0)::numeric))                                                                        \n productos          | ck_productos_pventa         | CHECK  | CHECK ((precio_venta >= (0)::numeric))                                                                         \n productos          | ck_productos_rango_stock    | CHECK  | CHECK (((stock_maximo = 0) OR (stock_maximo >= stock_minimo)))                                                 \n productos          | ck_productos_smax           | CHECK  | CHECK ((stock_maximo >= 0))                                                                                    \n productos          | ck_productos_smin           | CHECK  | CHECK ((stock_minimo >= 0))                                                                                    \n productos          | productos_sku_key           | UNIQUE | UNIQUE (sku)                                                                                                   \n proveedores        | ck_proveedores_rfc          | CHECK  | CHECK ((char_length((rfc)::text) = ANY (ARRAY[12, 13])))                                                       \n proveedores        | proveedores_rfc_key         | UNIQUE | UNIQUE (rfc)                                                                                                   \n tipos_movimiento   | ck_tipos_naturaleza         | CHECK  | CHECK (((naturaleza)::text = ANY ((ARRAY['ENTRADA'::character varying, 'SALIDA'::character varying])::text[])))\n tipos_movimiento   | tipos_movimiento_nombre_key | UNIQUE | UNIQUE (nombre)                                                                                                \n usuarios           | ck_usuarios_rol             | CHECK  | CHECK (((rol)::text = ANY ((ARRAY['admin'::character varying, 'usuario'::character varying])::text[])))        \n usuarios           | usuarios_correo_key         | UNIQUE | UNIQUE (correo)                                                                                                \n(22 filas)",
+              "filas": 22,
+              "ok": true
+            }
+          ]
+        },
+        {
+          "titulo": "Tipos de datos de la tabla movimientos",
+          "como": "owner",
+          "sentencias": [
+            {
+              "sql": "SELECT column_name AS columna,\n       CASE WHEN data_type = 'character varying' THEN 'varchar(' || character_maximum_length || ')'\n            WHEN data_type = 'numeric' THEN 'numeric(' || numeric_precision || ',' || numeric_scale || ')'\n            ELSE data_type END AS tipo,\n       is_nullable AS nulo,\n       COALESCE(column_default, CASE WHEN is_identity = 'YES' THEN 'IDENTITY' END,\n                CASE WHEN is_generated = 'ALWAYS' THEN 'GENERADA: ' || generation_expression END) AS valor_por_defecto\nFROM information_schema.columns\nWHERE table_schema = 'public' AND table_name = 'movimientos'\nORDER BY ordinal_position;",
+              "esperaError": false,
+              "comando": "SELECT",
+              "salida": "        columna        |           tipo           | nulo |                           valor_por_defecto                          \n-----------------------+--------------------------+------+-----------------------------------------------------------------------\n id_movimiento         | integer                  | NO   | IDENTITY                                                             \n folio                 | varchar(12)              | YES  | GENERADA: ('MOV-'::text || lpad((id_movimiento)::text, 6, '0'::text))\n id_tipo               | smallint                 | NO   |                                                                      \n id_producto           | integer                  | NO   |                                                                      \n id_almacen            | smallint                 | NO   |                                                                      \n id_proveedor          | integer                  | YES  |                                                                      \n id_usuario            | integer                  | NO   |                                                                      \n cantidad              | integer                  | NO   |                                                                      \n costo_unitario        | numeric(12,2)            | NO   | 0                                                                    \n existencia_resultante | integer                  | NO   |                                                                      \n referencia            | varchar(60)              | YES  |                                                                      \n observaciones         | varchar(255)             | YES  |                                                                      \n fecha                 | timestamp with time zone | NO   | now()                                                                \n(13 filas)",
+              "filas": 13,
+              "ok": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "numero": 3,
+      "titulo": "Roles developer y \"user\"",
+      "secciones": [
+        {
+          "titulo": "Atributos de los roles",
+          "como": "owner",
+          "sentencias": [
+            {
+              "sql": "SELECT rolname AS rol, rolcanlogin AS login, rolinherit AS hereda,\n       rolcreatedb AS crea_bd, rolcreaterole AS crea_roles, rolsuper AS superusuario,\n       shobj_description(oid, 'pg_authid') AS descripcion\nFROM pg_roles\nWHERE rolname IN ('developer', 'user')\nORDER BY rolname;",
+              "esperaError": false,
+              "comando": "SELECT",
+              "salida": "    rol    | login | hereda | crea_bd | crea_roles | superusuario |                        descripcion                        \n-----------+-------+--------+---------+------------+--------------+------------------------------------------------------------\n developer | t     | t      | f       | f          | f            | Equipo de desarrollo: CRUD + creación de objetos en public\n user      | t     | t      | f       | f          | f            | Usuarios operativos: CRUD sin creación de objetos         \n(2 filas)",
+              "filas": 2,
+              "ok": true
+            }
+          ]
+        },
+        {
+          "titulo": "Permisos sobre la base de datos y el esquema public",
+          "como": "owner",
+          "sentencias": [
+            {
+              "sql": "SELECT r AS rol,\n       has_database_privilege(r, current_database(), 'CONNECT')   AS conectar,\n       has_database_privilege(r, current_database(), 'TEMPORARY') AS temporales,\n       has_database_privilege(r, current_database(), 'CREATE')    AS crear_esquemas,\n       has_schema_privilege(r, 'public', 'USAGE')  AS usar_public,\n       has_schema_privilege(r, 'public', 'CREATE') AS crear_en_public\nFROM unnest(ARRAY['developer', 'user']) AS r;",
+              "esperaError": false,
+              "comando": "SELECT",
+              "salida": "    rol    | conectar | temporales | crear_esquemas | usar_public | crear_en_public\n-----------+----------+------------+----------------+-------------+-----------------\n developer | t        | t          | f              | t           | t              \n user      | t        | f          | f              | t           | f              \n(2 filas)",
+              "filas": 2,
+              "ok": true
+            }
+          ]
+        },
+        {
+          "titulo": "Permisos CRUD en tablas existentes",
+          "como": "owner",
+          "sentencias": [
+            {
+              "sql": "SELECT grantee AS rol,\n       table_name AS tabla,\n       string_agg(privilege_type, ', ' ORDER BY privilege_type) AS privilegios\nFROM information_schema.role_table_grants\nWHERE table_schema = 'public' AND grantee IN ('developer', 'user')\nGROUP BY grantee, table_name\nORDER BY grantee, table_name;",
+              "esperaError": false,
+              "comando": "SELECT",
+              "salida": "    rol    |         tabla          |          privilegios          \n-----------+------------------------+--------------------------------\n developer | almacenes              | DELETE, INSERT, SELECT, UPDATE\n developer | bitacora               | DELETE, INSERT, SELECT, UPDATE\n developer | categorias             | DELETE, INSERT, SELECT, UPDATE\n developer | inventario             | DELETE, INSERT, SELECT, UPDATE\n developer | movimientos            | DELETE, INSERT, SELECT, UPDATE\n developer | producto_proveedor     | DELETE, INSERT, SELECT, UPDATE\n developer | productos              | DELETE, INSERT, SELECT, UPDATE\n developer | proveedores            | DELETE, INSERT, SELECT, UPDATE\n developer | tipos_movimiento       | DELETE, INSERT, SELECT, UPDATE\n developer | usuarios               | DELETE, INSERT, SELECT, UPDATE\n developer | vw_estado_inventario   | DELETE, INSERT, SELECT, UPDATE\n developer | vw_movimientos_diarios | DELETE, INSERT, SELECT, UPDATE\n user      | almacenes              | DELETE, INSERT, SELECT, UPDATE\n user      | bitacora               | DELETE, INSERT, SELECT, UPDATE\n user      | categorias             | DELETE, INSERT, SELECT, UPDATE\n user      | inventario             | DELETE, INSERT, SELECT, UPDATE\n user      | movimientos            | DELETE, INSERT, SELECT, UPDATE\n user      | producto_proveedor     | DELETE, INSERT, SELECT, UPDATE\n user      | productos              | DELETE, INSERT, SELECT, UPDATE\n user      | proveedores            | DELETE, INSERT, SELECT, UPDATE\n user      | tipos_movimiento       | DELETE, INSERT, SELECT, UPDATE\n user      | usuarios               | DELETE, INSERT, SELECT, UPDATE\n user      | vw_estado_inventario   | DELETE, INSERT, SELECT, UPDATE\n user      | vw_movimientos_diarios | DELETE, INSERT, SELECT, UPDATE\n(24 filas)",
+              "filas": 24,
+              "ok": true
+            }
+          ]
+        },
+        {
+          "titulo": "Permisos por defecto para tablas, secuencias y funciones FUTURAS",
+          "como": "owner",
+          "sentencias": [
+            {
+              "sql": "SELECT pg_get_userbyid(d.defaclrole) AS cuando_crea,\n       CASE d.defaclobjtype WHEN 'r' THEN 'tablas' WHEN 'S' THEN 'secuencias' WHEN 'f' THEN 'funciones' END AS objetos,\n       a.grantee::regrole AS se_otorga_a,\n       string_agg(a.privilege_type, ', ' ORDER BY a.privilege_type) AS privilegios\nFROM pg_default_acl d\nCROSS JOIN LATERAL aclexplode(d.defaclacl) a\nWHERE pg_get_userbyid(d.defaclrole) IN ('nexo_inventario_owner', 'developer')\nGROUP BY 1, 2, 3\nORDER BY 1, 2, 3;",
+              "esperaError": false,
+              "comando": "SELECT",
+              "salida": "      cuando_crea      |  objetos   | se_otorga_a |          privilegios          \n-----------------------+------------+-------------+--------------------------------\n developer             | funciones  | developer   | EXECUTE                       \n developer             | funciones  | \"user\"      | EXECUTE                       \n developer             | secuencias | developer   | SELECT, UPDATE, USAGE         \n developer             | secuencias | \"user\"      | SELECT, USAGE                 \n developer             | tablas     | developer   | DELETE, INSERT, SELECT, UPDATE\n developer             | tablas     | \"user\"      | DELETE, INSERT, SELECT, UPDATE\n nexo_inventario_owner | funciones  | developer   | EXECUTE                       \n nexo_inventario_owner | funciones  | \"user\"      | EXECUTE                       \n nexo_inventario_owner | secuencias | developer   | SELECT, UPDATE, USAGE         \n nexo_inventario_owner | secuencias | \"user\"      | SELECT, USAGE                 \n nexo_inventario_owner | tablas     | developer   | DELETE, INSERT, SELECT, UPDATE\n nexo_inventario_owner | tablas     | \"user\"      | DELETE, INSERT, SELECT, UPDATE\n(12 filas)",
+              "filas": 12,
+              "ok": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "numero": 4,
+      "titulo": "Usuarios y asignación de roles",
+      "secciones": [
+        {
+          "titulo": "Usuarios creados y rol asignado",
+          "como": "owner",
+          "sentencias": [
+            {
+              "sql": "SELECT u.rolname AS usuario, u.rolcanlogin AS login,\n       g.rolname AS rol_asignado,\n       m.inherit_option AS hereda_permisos, m.set_option AS puede_set_role,\n       (SELECT string_agg(s, ', ') FROM unnest(u.rolconfig) s) AS configuracion,\n       shobj_description(u.oid, 'pg_authid') AS descripcion\nFROM pg_auth_members m\nJOIN pg_roles u ON u.oid = m.member\nJOIN pg_roles g ON g.oid = m.roleid\nWHERE g.rolname IN ('developer', 'user') AND u.rolname <> 'nexo_inventario_owner'\nORDER BY g.rolname, u.rolname;",
+              "esperaError": false,
+              "comando": "SELECT",
+              "salida": "  usuario   | login | rol_asignado | hereda_permisos | puede_set_role | configuracion  |                        descripcion                       \n------------+-------+--------------+-----------------+----------------+----------------+-----------------------------------------------------------\n dev_ana    | t     | developer    | t               | t              | role=developer | Desarrolladora (miembro de developer)                    \n dev_luis   | t     | developer    | t               | t              | role=developer | Desarrollador (miembro de developer)                     \n app_nexo   | t     | user         | t               | t              |                | Cuenta de servicio de la aplicación web (miembro de user)\n usr_carlos | t     | user         | t               | t              |                | Analista de inventario (miembro de user)                 \n(4 filas)",
+              "filas": 4,
+              "ok": true
+            }
+          ]
+        },
+        {
+          "titulo": "dev_ana (developer) inicia sesión y crea una tabla nueva",
+          "como": "dev_ana",
+          "sentencias": [
+            {
+              "sql": "SELECT session_user AS sesion, current_user AS actua_como;",
+              "esperaError": false,
+              "comando": "SELECT",
+              "salida": " sesion  | actua_como\n---------+------------\n dev_ana | developer \n(1 fila)",
+              "filas": 1,
+              "ok": true
+            },
+            {
+              "sql": "CREATE TABLE evidencia_developer (id SERIAL PRIMARY KEY, nota VARCHAR(60), creado_en TIMESTAMPTZ DEFAULT now());",
+              "esperaError": false,
+              "comando": "CREATE",
+              "salida": "CREATE TABLE",
+              "filas": 0,
+              "ok": true
+            },
+            {
+              "sql": "INSERT INTO evidencia_developer (nota) VALUES ('Tabla creada por un desarrollador') RETURNING *;",
+              "esperaError": false,
+              "comando": "INSERT",
+              "salida": " id |               nota                |       creado_en       \n----+-----------------------------------+------------------------\n  1 | Tabla creada por un desarrollador | 2026-09-30 20:55:16+00\n(1 fila)",
+              "filas": 1,
+              "ok": true
+            }
+          ]
+        },
+        {
+          "titulo": "usr_carlos (\"user\") hace CRUD en la tabla FUTURA gracias a los permisos por defecto",
+          "como": "usr_carlos",
+          "sentencias": [
+            {
+              "sql": "SELECT session_user AS sesion, current_user AS actua_como;",
+              "esperaError": false,
+              "comando": "SELECT",
+              "salida": "   sesion   | actua_como\n------------+------------\n usr_carlos | usr_carlos\n(1 fila)",
+              "filas": 1,
+              "ok": true
+            },
+            {
+              "sql": "INSERT INTO evidencia_developer (nota) VALUES ('Insertado por usr_carlos') RETURNING *;",
+              "esperaError": false,
+              "comando": "INSERT",
+              "salida": " id |           nota           |       creado_en       \n----+--------------------------+------------------------\n  2 | Insertado por usr_carlos | 2026-09-30 20:55:16+00\n(1 fila)",
+              "filas": 1,
+              "ok": true
+            },
+            {
+              "sql": "UPDATE evidencia_developer SET nota = nota || ' (editado)' WHERE nota LIKE '%usr_carlos%' RETURNING *;",
+              "esperaError": false,
+              "comando": "UPDATE",
+              "salida": " id |                nota                |       creado_en       \n----+------------------------------------+------------------------\n  2 | Insertado por usr_carlos (editado) | 2026-09-30 20:55:16+00\n(1 fila)",
+              "filas": 1,
+              "ok": true
+            },
+            {
+              "sql": "SELECT * FROM evidencia_developer ORDER BY id;",
+              "esperaError": false,
+              "comando": "SELECT",
+              "salida": " id |                nota                |       creado_en       \n----+------------------------------------+------------------------\n  1 | Tabla creada por un desarrollador  | 2026-09-30 20:55:16+00\n  2 | Insertado por usr_carlos (editado) | 2026-09-30 20:55:16+00\n(2 filas)",
+              "filas": 2,
+              "ok": true
+            },
+            {
+              "sql": "DELETE FROM evidencia_developer WHERE nota LIKE '%usr_carlos%' RETURNING id;",
+              "esperaError": false,
+              "comando": "DELETE",
+              "salida": " id\n----\n  2\n(1 fila)",
+              "filas": 1,
+              "ok": true
+            }
+          ]
+        },
+        {
+          "titulo": "usr_carlos (\"user\") NO puede crear objetos",
+          "como": "usr_carlos",
+          "sentencias": [
+            {
+              "sql": "CREATE TABLE intento_usuario (id INTEGER);",
+              "esperaError": true,
+              "error": {
+                "codigo": "42501",
+                "mensaje": "permission denied for schema public"
+              },
+              "salida": "ERROR:  permission denied for schema public\nSQLSTATE: 42501",
+              "ok": true
+            },
+            {
+              "sql": "CREATE VIEW vw_intento AS SELECT 1 AS x;",
+              "esperaError": true,
+              "error": {
+                "codigo": "42501",
+                "mensaje": "permission denied for schema public"
+              },
+              "salida": "ERROR:  permission denied for schema public\nSQLSTATE: 42501",
+              "ok": true
+            },
+            {
+              "sql": "CREATE TEMP TABLE intento_temporal (id INTEGER);",
+              "esperaError": true,
+              "error": {
+                "codigo": "42501",
+                "mensaje": "permission denied to create temporary tables in database \"nexo_inventario\""
+              },
+              "salida": "ERROR:  permission denied to create temporary tables in database \"nexo_inventario\"\nSQLSTATE: 42501",
+              "ok": true
+            },
+            {
+              "sql": "DROP TABLE evidencia_developer;",
+              "esperaError": true,
+              "error": {
+                "codigo": "42501",
+                "mensaje": "must be owner of table evidencia_developer"
+              },
+              "salida": "ERROR:  must be owner of table evidencia_developer\nSQLSTATE: 42501",
+              "ok": true
+            }
+          ]
+        },
+        {
+          "titulo": "usr_carlos (\"user\") hace CRUD en una tabla existente",
+          "como": "usr_carlos",
+          "sentencias": [
+            {
+              "sql": "INSERT INTO categorias (nombre, descripcion, color) VALUES ('Evidencia CRUD', 'Registro temporal', '#123456') RETURNING id_categoria, nombre;",
+              "esperaError": false,
+              "comando": "INSERT",
+              "salida": " id_categoria |     nombre    \n--------------+----------------\n            9 | Evidencia CRUD\n(1 fila)",
+              "filas": 1,
+              "ok": true
+            },
+            {
+              "sql": "UPDATE categorias SET descripcion = 'Registro temporal (actualizado)' WHERE nombre = 'Evidencia CRUD' RETURNING id_categoria, descripcion;",
+              "esperaError": false,
+              "comando": "UPDATE",
+              "salida": " id_categoria |           descripcion          \n--------------+---------------------------------\n            9 | Registro temporal (actualizado)\n(1 fila)",
+              "filas": 1,
+              "ok": true
+            },
+            {
+              "sql": "SELECT id_categoria, nombre, descripcion FROM categorias WHERE nombre = 'Evidencia CRUD';",
+              "esperaError": false,
+              "comando": "SELECT",
+              "salida": " id_categoria |     nombre     |           descripcion          \n--------------+----------------+---------------------------------\n            9 | Evidencia CRUD | Registro temporal (actualizado)\n(1 fila)",
+              "filas": 1,
+              "ok": true
+            },
+            {
+              "sql": "DELETE FROM categorias WHERE nombre = 'Evidencia CRUD' RETURNING id_categoria;",
+              "esperaError": false,
+              "comando": "DELETE",
+              "salida": " id_categoria\n--------------\n            9\n(1 fila)",
+              "filas": 1,
+              "ok": true
+            }
+          ]
+        },
+        {
+          "titulo": "dev_ana elimina su tabla de prueba",
+          "como": "dev_ana",
+          "sentencias": [
+            {
+              "sql": "DROP TABLE evidencia_developer;",
+              "esperaError": false,
+              "comando": "DROP",
+              "salida": "DROP TABLE",
+              "filas": 0,
+              "ok": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "numero": 5,
+      "titulo": "Vistas con CTEs",
+      "secciones": [
+        {
+          "titulo": "Vistas creadas",
+          "como": "owner",
+          "sentencias": [
+            {
+              "sql": "SELECT viewname AS vista, viewowner AS propietario,\n       obj_description(format('%I', viewname)::regclass, 'pg_class') AS descripcion\nFROM pg_views WHERE schemaname = 'public' ORDER BY viewname;",
+              "esperaError": false,
+              "comando": "SELECT",
+              "salida": "         vista          |      propietario      |                                     descripcion                                    \n------------------------+-----------------------+-------------------------------------------------------------------------------------\n vw_estado_inventario   | nexo_inventario_owner | Existencia total, valor, rotación 30 días, cobertura y semáforo por producto (CTEs)\n vw_movimientos_diarios | nexo_inventario_owner | Entradas y salidas por día de los últimos 30 días, con días vacíos en cero (CTEs)  \n(2 filas)",
+              "filas": 2,
+              "ok": true
+            }
+          ]
+        },
+        {
+          "titulo": "vw_estado_inventario · productos que requieren atención",
+          "como": "usr_carlos",
+          "sentencias": [
+            {
+              "sql": "SELECT sku, nombre, categoria, existencia_total AS existencia, stock_minimo AS minimo,\n       valor_inventario AS valor, salidas_30d, dias_cobertura AS cobertura_dias, estado\nFROM vw_estado_inventario\nWHERE estado <> 'NORMAL'\nORDER BY CASE estado WHEN 'SIN STOCK' THEN 0 WHEN 'BAJO' THEN 1 ELSE 2 END, nombre;",
+              "esperaError": false,
+              "comando": "SELECT",
+              "salida": "     sku     |                 nombre                  |   categoria    | existencia | minimo |  valor   | salidas_30d | cobertura_dias |  estado  \n-------------+-----------------------------------------+----------------+------------+--------+----------+-------------+----------------+-----------\n MOB-ARC-001 | Archivero metálico 4 gavetas            | Mobiliario     |          0 |      2 |     0.00 |          13 |            0.0 | SIN STOCK\n COM-LAP-002 | Laptop HP ProBook 450 G10 i5 16GB 512GB | Cómputo        |          0 |      4 |     0.00 |           6 |            0.0 | SIN STOCK\n COM-LAP-003 | MacBook Air 13\" M3 8GB 256GB            | Cómputo        |          0 |      2 |     0.00 |          10 |            0.0 | SIN STOCK\n RED-AP-001  | Access Point Ubiquiti UniFi U6 Lite     | Redes          |          4 |      4 |  9800.00 |          11 |           10.9 | BAJO     \n PER-DIA-001 | Diadema Jabra Evolve2 30 USB-C          | Periféricos    |          8 |     10 |  9200.00 |          19 |           12.6 | BAJO     \n ALM-HDD-001 | Disco externo Seagate 2TB USB 3.0       | Almacenamiento |          4 |      8 |  5000.00 |          22 |            5.5 | BAJO     \n PAP-ENG-001 | Engrapadora Pilot metálica              | Papelería      |          5 |     15 |   575.00 |           8 |           18.7 | BAJO     \n MOB-ESC-001 | Escritorio en L 150 cm                  | Mobiliario     |          1 |      2 |  3100.00 |           6 |            5.0 | BAJO     \n ENE-MUL-001 | Multicontacto con supresor 6 salidas    | Energía        |          2 |     20 |   420.00 |          20 |            3.0 | BAJO     \n ALM-SSD-001 | SSD Kingston NV2 1TB NVMe               | Almacenamiento |         10 |     12 |  9500.00 |          42 |            7.1 | BAJO     \n IMP-TON-001 | Tóner HP 58A negro                      | Impresión      |          8 |     10 | 13200.00 |          17 |           14.1 | BAJO     \n PAP-BOL-001 | Bolígrafo BIC Cristal azul (caja 12)    | Papelería      |        236 |     40 | 11328.00 |          87 |           81.4 | EXCESO   \n PER-TEC-001 | Teclado Logitech K120 USB español       | Periféricos    |        166 |     30 | 27390.00 |          46 |          108.3 | EXCESO   \n(13 filas)",
+              "filas": 13,
+              "ok": true
+            }
+          ]
+        },
+        {
+          "titulo": "vw_movimientos_diarios · últimos 10 días",
+          "como": "usr_carlos",
+          "sentencias": [
+            {
+              "sql": "SELECT dia, movimientos, unidades_entrada, unidades_salida, importe_entrada, importe_salida\nFROM vw_movimientos_diarios\nORDER BY dia DESC\nLIMIT 10;",
+              "esperaError": false,
+              "comando": "SELECT",
+              "salida": "    dia     | movimientos | unidades_entrada | unidades_salida | importe_entrada | importe_salida\n------------+-------------+------------------+-----------------+-----------------+----------------\n 2026-09-30 |          14 |              318 |              80 |        43046.00 |      216190.00\n 2026-09-29 |           9 |               33 |              22 |        42520.00 |       17473.00\n 2026-09-28 |          10 |               15 |               4 |       136566.00 |        4270.00\n 2026-09-27 |           4 |                4 |               9 |        11200.00 |       38650.00\n 2026-09-26 |           4 |               18 |               4 |        70200.00 |       45000.00\n 2026-09-25 |           5 |               52 |               8 |        56200.00 |       33700.00\n 2026-09-24 |           7 |                5 |              24 |        11250.00 |       48710.00\n 2026-09-23 |           8 |               21 |              16 |        42850.00 |        8035.00\n 2026-09-22 |           5 |               16 |               7 |         2320.00 |        8485.00\n 2026-09-21 |           9 |               75 |              27 |        24680.00 |       35820.00\n(10 filas)",
+              "filas": 10,
+              "ok": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "numero": 6,
+      "titulo": "Funciones",
+      "secciones": [
+        {
+          "titulo": "Funciones creadas",
+          "como": "owner",
+          "sentencias": [
+            {
+              "sql": "SELECT p.proname AS funcion,\n       p.pronargs AS parametros,\n       p.pronargdefaults AS con_valor_por_defecto,\n       pg_get_function_result(p.oid) AS retorna,\n       l.lanname AS lenguaje,\n       CASE p.provolatile WHEN 's' THEN 'STABLE' WHEN 'i' THEN 'IMMUTABLE' ELSE 'VOLATILE' END AS volatilidad\nFROM pg_proc p JOIN pg_language l ON l.oid = p.prolang\nWHERE p.pronamespace = 'public'::regnamespace\nORDER BY p.proname;",
+              "esperaError": false,
+              "comando": "SELECT",
+              "salida": "         funcion         | parametros | con_valor_por_defecto | retorna | lenguaje | volatilidad\n-------------------------+------------+-----------------------+---------+----------+-------------\n fn_registrar_movimiento |         10 |                     5 | integer | plpgsql  | VOLATILE   \n fn_valor_inventario     |          2 |                     2 | numeric | sql      | STABLE     \n(2 filas)",
+              "filas": 2,
+              "ok": true
+            },
+            {
+              "sql": "SELECT p.proname AS funcion, a.n, a.parametro, format_type(a.tipo, NULL) AS tipo\nFROM pg_proc p\nCROSS JOIN LATERAL unnest(p.proargnames, p.proargtypes::oid[]) WITH ORDINALITY AS a(parametro, tipo, n)\nWHERE p.pronamespace = 'public'::regnamespace\nORDER BY p.proname, a.n;",
+              "esperaError": false,
+              "comando": "SELECT",
+              "salida": "         funcion         | n  |    parametro     |           tipo          \n-------------------------+----+------------------+--------------------------\n fn_registrar_movimiento |  1 | p_id_producto    | integer                 \n fn_registrar_movimiento |  2 | p_id_almacen     | integer                 \n fn_registrar_movimiento |  3 | p_id_tipo        | integer                 \n fn_registrar_movimiento |  4 | p_cantidad       | integer                 \n fn_registrar_movimiento |  5 | p_id_usuario     | integer                 \n fn_registrar_movimiento |  6 | p_costo_unitario | numeric                 \n fn_registrar_movimiento |  7 | p_id_proveedor   | integer                 \n fn_registrar_movimiento |  8 | p_referencia     | character varying       \n fn_registrar_movimiento |  9 | p_observaciones  | character varying       \n fn_registrar_movimiento | 10 | p_fecha          | timestamp with time zone\n fn_valor_inventario     |  1 | p_id_categoria   | integer                 \n fn_valor_inventario     |  2 | p_id_almacen     | integer                 \n(12 filas)",
+              "filas": 12,
+              "ok": true
+            }
+          ]
+        },
+        {
+          "titulo": "fn_valor_inventario · cálculo total, por almacén y por categoría",
+          "como": "usr_carlos",
+          "sentencias": [
+            {
+              "sql": "SELECT 'Toda la empresa' AS alcance, fn_valor_inventario() AS valor\nUNION ALL\nSELECT 'Almacén: ' || nombre, fn_valor_inventario(NULL, id_almacen) FROM almacenes\nUNION ALL\nSELECT 'Categoría: ' || nombre, fn_valor_inventario(id_categoria) FROM categorias\nORDER BY valor DESC;",
+              "esperaError": false,
+              "comando": "SELECT",
+              "salida": "              alcance               |   valor  \n------------------------------------+-----------\n Toda la empresa                    | 893088.00\n Almacén: Almacén Central Monterrey | 650270.00\n Categoría: Cómputo                 | 348600.00\n Categoría: Periféricos             | 206760.00\n Almacén: Sucursal Guadalajara      | 140280.00\n Almacén: Sucursal Saltillo         | 102538.00\n Categoría: Impresión               |  84650.00\n Categoría: Redes                   |  83640.00\n Categoría: Papelería               |  53858.00\n Categoría: Energía                 |  44830.00\n Categoría: Almacenamiento          |  39450.00\n Categoría: Mobiliario              |  31300.00\n(12 filas)",
+              "filas": 12,
+              "ok": true
+            }
+          ]
+        },
+        {
+          "titulo": "fn_registrar_movimiento · compra a proveedor (entrada)",
+          "como": "usr_carlos",
+          "sentencias": [
+            {
+              "sql": "SELECT existencia AS existencia_antes FROM inventario\nWHERE id_producto = (SELECT id_producto FROM productos WHERE sku = 'PER-DIA-001')\n  AND id_almacen  = (SELECT id_almacen FROM almacenes WHERE nombre = 'Almacén Central Monterrey');",
+              "esperaError": false,
+              "comando": "SELECT",
+              "salida": " existencia_antes\n------------------\n                0\n(1 fila)",
+              "filas": 1,
+              "ok": true
+            },
+            {
+              "sql": "SELECT fn_registrar_movimiento(\n         (SELECT id_producto FROM productos WHERE sku = 'PER-DIA-001'),\n         (SELECT id_almacen FROM almacenes WHERE nombre = 'Almacén Central Monterrey'),\n         (SELECT id_tipo FROM tipos_movimiento WHERE nombre = 'Compra a proveedor'),\n         20,\n         (SELECT id_usuario FROM usuarios WHERE correo = 'sofia.villarreal@nexo.mx'),\n         1150.00,\n         (SELECT id_proveedor FROM proveedores WHERE rfc = 'MDM180725K91'),\n         'OC-EVIDENCIA-01',\n         'Evidencia 6: entrada registrada con la función') AS id_movimiento;",
+              "esperaError": false,
+              "comando": "SELECT",
+              "salida": " id_movimiento\n---------------\n           504\n(1 fila)",
+              "filas": 1,
+              "ok": true
+            },
+            {
+              "sql": "SELECT folio, cantidad, costo_unitario, existencia_resultante, referencia\nFROM movimientos ORDER BY id_movimiento DESC LIMIT 1;",
+              "esperaError": false,
+              "comando": "SELECT",
+              "salida": "   folio    | cantidad | costo_unitario | existencia_resultante |   referencia   \n------------+----------+----------------+-----------------------+-----------------\n MOV-000504 |       20 |        1150.00 |                    20 | OC-EVIDENCIA-01\n(1 fila)",
+              "filas": 1,
+              "ok": true
+            }
+          ]
+        },
+        {
+          "titulo": "fn_registrar_movimiento · venta (salida)",
+          "como": "usr_carlos",
+          "sentencias": [
+            {
+              "sql": "SELECT fn_registrar_movimiento(\n         (SELECT id_producto FROM productos WHERE sku = 'PER-DIA-001'),\n         (SELECT id_almacen FROM almacenes WHERE nombre = 'Almacén Central Monterrey'),\n         (SELECT id_tipo FROM tipos_movimiento WHERE nombre = 'Venta'),\n         3,\n         (SELECT id_usuario FROM usuarios WHERE correo = 'jorge.salinas@nexo.mx'),\n         p_referencia => 'FAC-EVIDENCIA-01') AS id_movimiento;",
+              "esperaError": false,
+              "comando": "SELECT",
+              "salida": " id_movimiento\n---------------\n           505\n(1 fila)",
+              "filas": 1,
+              "ok": true
+            },
+            {
+              "sql": "SELECT folio, cantidad, existencia_resultante, referencia\nFROM movimientos ORDER BY id_movimiento DESC LIMIT 1;",
+              "esperaError": false,
+              "comando": "SELECT",
+              "salida": "   folio    | cantidad | existencia_resultante |    referencia   \n------------+----------+-----------------------+------------------\n MOV-000505 |        3 |                    17 | FAC-EVIDENCIA-01\n(1 fila)",
+              "filas": 1,
+              "ok": true
+            }
+          ]
+        },
+        {
+          "titulo": "fn_registrar_movimiento · validaciones (deben fallar)",
+          "como": "usr_carlos",
+          "sentencias": [
+            {
+              "sql": "SELECT fn_registrar_movimiento(\n         (SELECT id_producto FROM productos WHERE sku = 'MOB-ARC-001'),\n         (SELECT id_almacen FROM almacenes WHERE nombre = 'Almacén Central Monterrey'),\n         (SELECT id_tipo FROM tipos_movimiento WHERE nombre = 'Venta'),\n         5,\n         (SELECT id_usuario FROM usuarios WHERE correo = 'jorge.salinas@nexo.mx'));",
+              "esperaError": true,
+              "error": {
+                "codigo": "P0001",
+                "mensaje": "Existencia insuficiente: hay 0 y se solicitan 5"
+              },
+              "salida": "ERROR:  Existencia insuficiente: hay 0 y se solicitan 5\nSQLSTATE: P0001",
+              "ok": true
+            },
+            {
+              "sql": "SELECT fn_registrar_movimiento(\n         (SELECT id_producto FROM productos WHERE sku = 'PER-DIA-001'),\n         (SELECT id_almacen FROM almacenes WHERE nombre = 'Almacén Central Monterrey'),\n         (SELECT id_tipo FROM tipos_movimiento WHERE nombre = 'Compra a proveedor'),\n         5,\n         (SELECT id_usuario FROM usuarios WHERE correo = 'jorge.salinas@nexo.mx'));",
+              "esperaError": true,
+              "error": {
+                "codigo": "P0001",
+                "mensaje": "Este tipo de movimiento requiere indicar un proveedor"
+              },
+              "salida": "ERROR:  Este tipo de movimiento requiere indicar un proveedor\nSQLSTATE: P0001",
+              "ok": true
+            },
+            {
+              "sql": "SELECT fn_registrar_movimiento(1, 1, 5, 0, 1);",
+              "esperaError": true,
+              "error": {
+                "codigo": "P0001",
+                "mensaje": "La cantidad debe ser mayor a cero (recibido: 0)"
+              },
+              "salida": "ERROR:  La cantidad debe ser mayor a cero (recibido: 0)\nSQLSTATE: P0001",
+              "ok": true
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "numero": 7,
+      "titulo": "Uso de vistas y funciones",
+      "secciones": [
+        {
+          "titulo": "Indicadores del dashboard (vista + función), como los consulta la aplicación",
+          "como": "app_nexo",
+          "sentencias": [
+            {
+              "sql": "SELECT fn_valor_inventario()                                   AS valor_total,\n       COUNT(*)                                                AS productos_activos,\n       SUM(existencia_total)                                   AS unidades,\n       COUNT(*) FILTER (WHERE estado IN ('BAJO', 'SIN STOCK')) AS alertas\nFROM vw_estado_inventario;",
+              "esperaError": false,
+              "comando": "SELECT",
+              "salida": " valor_total | productos_activos | unidades | alertas\n-------------+-------------------+----------+---------\n   912638.00 |                37 |     1276 |      10\n(1 fila)",
+              "filas": 1,
+              "ok": true
+            }
+          ]
+        },
+        {
+          "titulo": "Valor por categoría: la vista contra la función (deben coincidir)",
+          "como": "app_nexo",
+          "sentencias": [
+            {
+              "sql": "SELECT v.categoria,\n       SUM(v.valor_inventario)                AS valor_desde_vista,\n       fn_valor_inventario(v.id_categoria)    AS valor_desde_funcion,\n       SUM(v.valor_inventario) = fn_valor_inventario(v.id_categoria) AS coinciden\nFROM vw_estado_inventario v\nGROUP BY v.categoria, v.id_categoria\nORDER BY valor_desde_vista DESC;",
+              "esperaError": false,
+              "comando": "SELECT",
+              "salida": "   categoria    | valor_desde_vista | valor_desde_funcion | coinciden\n----------------+-------------------+---------------------+-----------\n Cómputo        |         348600.00 |           348600.00 | t        \n Periféricos    |         226310.00 |           226310.00 | t        \n Impresión      |          84650.00 |            84650.00 | t        \n Redes          |          83640.00 |            83640.00 | t        \n Papelería      |          53858.00 |            53858.00 | t        \n Energía        |          44830.00 |            44830.00 | t        \n Almacenamiento |          39450.00 |            39450.00 | t        \n Mobiliario     |          31300.00 |            31300.00 | t        \n(8 filas)",
+              "filas": 8,
+              "ok": true
+            }
+          ]
+        },
+        {
+          "titulo": "Reabastecimiento automático: registrar compras para todo lo agotado",
+          "como": "app_nexo",
+          "sentencias": [
+            {
+              "sql": "SELECT v.sku, v.nombre, v.existencia_total AS antes,\n       fn_registrar_movimiento(\n           v.id_producto,\n           (SELECT id_almacen FROM almacenes WHERE nombre = 'Almacén Central Monterrey'),\n           (SELECT id_tipo FROM tipos_movimiento WHERE nombre = 'Compra a proveedor'),\n           GREATEST(v.stock_minimo * 2, 1),\n           (SELECT id_usuario FROM usuarios WHERE correo = 'sofia.villarreal@nexo.mx'),\n           NULL,\n           (SELECT pp.id_proveedor FROM producto_proveedor pp WHERE pp.id_producto = v.id_producto AND pp.es_principal),\n           'OC-REABASTO-AUTO') AS id_movimiento\nFROM vw_estado_inventario v\nWHERE v.estado = 'SIN STOCK';",
+              "esperaError": false,
+              "comando": "SELECT",
+              "salida": "     sku     |                 nombre                  | antes | id_movimiento\n-------------+-----------------------------------------+-------+---------------\n COM-LAP-003 | MacBook Air 13\" M3 8GB 256GB            |     0 |           506\n COM-LAP-002 | Laptop HP ProBook 450 G10 i5 16GB 512GB |     0 |           507\n MOB-ARC-001 | Archivero metálico 4 gavetas            |     0 |           508\n(3 filas)",
+              "filas": 3,
+              "ok": true
+            }
+          ]
+        },
+        {
+          "titulo": "Estado después del reabastecimiento",
+          "como": "app_nexo",
+          "sentencias": [
+            {
+              "sql": "SELECT estado, COUNT(*) AS productos, SUM(valor_inventario) AS valor\nFROM vw_estado_inventario\nGROUP BY estado\nORDER BY productos DESC;",
+              "esperaError": false,
+              "comando": "SELECT",
+              "salida": " estado | productos |   valor   \n--------+-----------+------------\n NORMAL |        28 | 1047925.00\n BAJO   |         7 |   41595.00\n EXCESO |         2 |   38718.00\n(3 filas)",
+              "filas": 3,
+              "ok": true
+            }
+          ]
+        },
+        {
+          "titulo": "Kardex del producto reabastecido (tabla movimientos + vista)",
+          "como": "app_nexo",
+          "sentencias": [
+            {
+              "sql": "SELECT m.folio, t.nombre AS tipo, m.cantidad, m.existencia_resultante,\n       to_char(m.fecha AT TIME ZONE 'America/Mexico_City', 'YYYY-MM-DD HH24:MI') AS fecha,\n       v.estado AS estado_actual\nFROM movimientos m\nJOIN tipos_movimiento t ON t.id_tipo = m.id_tipo\nJOIN vw_estado_inventario v ON v.id_producto = m.id_producto\nWHERE v.sku = 'COM-LAP-003'\nORDER BY m.id_movimiento DESC\nLIMIT 6;",
+              "esperaError": false,
+              "comando": "SELECT",
+              "salida": "   folio    |        tipo        | cantidad | existencia_resultante |      fecha       | estado_actual\n------------+--------------------+----------+-----------------------+------------------+---------------\n MOV-000506 | Compra a proveedor |        4 |                     4 | 2026-09-30 14:55 | NORMAL       \n MOV-000495 | Venta              |        1 |                     0 | 2026-09-30 11:02 | NORMAL       \n MOV-000494 | Venta              |        5 |                     0 | 2026-09-30 10:55 | NORMAL       \n MOV-000471 | Compra a proveedor |        5 |                     5 | 2026-09-28 00:18 | NORMAL       \n MOV-000437 | Venta              |        1 |                     0 | 2026-09-21 23:18 | NORMAL       \n MOV-000421 | Merma / daño       |        1 |                     1 | 2026-09-19 20:59 | NORMAL       \n(6 filas)",
+              "filas": 6,
+              "ok": true
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "diccionario": [
+    {
+      "tabla": "usuarios",
+      "descripcion_tabla": "Usuarios del sistema web (rol de aplicación admin/usuario)",
+      "columna": "id_usuario",
+      "tipo": "integer",
+      "obligatorio": true,
+      "por_defecto": "IDENTITY",
+      "llaves": "PK"
+    },
+    {
+      "tabla": "usuarios",
+      "descripcion_tabla": "Usuarios del sistema web (rol de aplicación admin/usuario)",
+      "columna": "nombre",
+      "tipo": "character varying(80)",
+      "obligatorio": true,
+      "por_defecto": null,
+      "llaves": null
+    },
+    {
+      "tabla": "usuarios",
+      "descripcion_tabla": "Usuarios del sistema web (rol de aplicación admin/usuario)",
+      "columna": "apellidos",
+      "tipo": "character varying(100)",
+      "obligatorio": true,
+      "por_defecto": null,
+      "llaves": null
+    },
+    {
+      "tabla": "usuarios",
+      "descripcion_tabla": "Usuarios del sistema web (rol de aplicación admin/usuario)",
+      "columna": "correo",
+      "tipo": "character varying(120)",
+      "obligatorio": true,
+      "por_defecto": null,
+      "llaves": "UK"
+    },
+    {
+      "tabla": "usuarios",
+      "descripcion_tabla": "Usuarios del sistema web (rol de aplicación admin/usuario)",
+      "columna": "password_hash",
+      "tipo": "character varying(100)",
+      "obligatorio": true,
+      "por_defecto": null,
+      "llaves": null
+    },
+    {
+      "tabla": "usuarios",
+      "descripcion_tabla": "Usuarios del sistema web (rol de aplicación admin/usuario)",
+      "columna": "rol",
+      "tipo": "character varying(10)",
+      "obligatorio": true,
+      "por_defecto": "'usuario'::character varying",
+      "llaves": null
+    },
+    {
+      "tabla": "usuarios",
+      "descripcion_tabla": "Usuarios del sistema web (rol de aplicación admin/usuario)",
+      "columna": "puesto",
+      "tipo": "character varying(80)",
+      "obligatorio": false,
+      "por_defecto": null,
+      "llaves": null
+    },
+    {
+      "tabla": "usuarios",
+      "descripcion_tabla": "Usuarios del sistema web (rol de aplicación admin/usuario)",
+      "columna": "activo",
+      "tipo": "boolean",
+      "obligatorio": true,
+      "por_defecto": "true",
+      "llaves": null
+    },
+    {
+      "tabla": "usuarios",
+      "descripcion_tabla": "Usuarios del sistema web (rol de aplicación admin/usuario)",
+      "columna": "ultimo_acceso",
+      "tipo": "timestamp with time zone",
+      "obligatorio": false,
+      "por_defecto": null,
+      "llaves": null
+    },
+    {
+      "tabla": "usuarios",
+      "descripcion_tabla": "Usuarios del sistema web (rol de aplicación admin/usuario)",
+      "columna": "creado_en",
+      "tipo": "timestamp with time zone",
+      "obligatorio": true,
+      "por_defecto": "now()",
+      "llaves": null
+    },
+    {
+      "tabla": "categorias",
+      "descripcion_tabla": "Categorías del catálogo de productos",
+      "columna": "id_categoria",
+      "tipo": "smallint",
+      "obligatorio": true,
+      "por_defecto": "IDENTITY",
+      "llaves": "PK"
+    },
+    {
+      "tabla": "categorias",
+      "descripcion_tabla": "Categorías del catálogo de productos",
+      "columna": "nombre",
+      "tipo": "character varying(60)",
+      "obligatorio": true,
+      "por_defecto": null,
+      "llaves": "UK"
+    },
+    {
+      "tabla": "categorias",
+      "descripcion_tabla": "Categorías del catálogo de productos",
+      "columna": "descripcion",
+      "tipo": "character varying(255)",
+      "obligatorio": false,
+      "por_defecto": null,
+      "llaves": null
+    },
+    {
+      "tabla": "categorias",
+      "descripcion_tabla": "Categorías del catálogo de productos",
+      "columna": "color",
+      "tipo": "character(7)",
+      "obligatorio": true,
+      "por_defecto": "'#4F46E5'::bpchar",
+      "llaves": null
+    },
+    {
+      "tabla": "categorias",
+      "descripcion_tabla": "Categorías del catálogo de productos",
+      "columna": "activo",
+      "tipo": "boolean",
+      "obligatorio": true,
+      "por_defecto": "true",
+      "llaves": null
+    },
+    {
+      "tabla": "categorias",
+      "descripcion_tabla": "Categorías del catálogo de productos",
+      "columna": "creado_en",
+      "tipo": "timestamp with time zone",
+      "obligatorio": true,
+      "por_defecto": "now()",
+      "llaves": null
+    },
+    {
+      "tabla": "proveedores",
+      "descripcion_tabla": "Proveedores de mercancía",
+      "columna": "id_proveedor",
+      "tipo": "integer",
+      "obligatorio": true,
+      "por_defecto": "IDENTITY",
+      "llaves": "PK"
+    },
+    {
+      "tabla": "proveedores",
+      "descripcion_tabla": "Proveedores de mercancía",
+      "columna": "razon_social",
+      "tipo": "character varying(150)",
+      "obligatorio": true,
+      "por_defecto": null,
+      "llaves": null
+    },
+    {
+      "tabla": "proveedores",
+      "descripcion_tabla": "Proveedores de mercancía",
+      "columna": "rfc",
+      "tipo": "character varying(13)",
+      "obligatorio": true,
+      "por_defecto": null,
+      "llaves": "UK"
+    },
+    {
+      "tabla": "proveedores",
+      "descripcion_tabla": "Proveedores de mercancía",
+      "columna": "contacto",
+      "tipo": "character varying(100)",
+      "obligatorio": false,
+      "por_defecto": null,
+      "llaves": null
+    },
+    {
+      "tabla": "proveedores",
+      "descripcion_tabla": "Proveedores de mercancía",
+      "columna": "telefono",
+      "tipo": "character varying(20)",
+      "obligatorio": false,
+      "por_defecto": null,
+      "llaves": null
+    },
+    {
+      "tabla": "proveedores",
+      "descripcion_tabla": "Proveedores de mercancía",
+      "columna": "correo",
+      "tipo": "character varying(120)",
+      "obligatorio": false,
+      "por_defecto": null,
+      "llaves": null
+    },
+    {
+      "tabla": "proveedores",
+      "descripcion_tabla": "Proveedores de mercancía",
+      "columna": "ciudad",
+      "tipo": "character varying(80)",
+      "obligatorio": false,
+      "por_defecto": null,
+      "llaves": null
+    },
+    {
+      "tabla": "proveedores",
+      "descripcion_tabla": "Proveedores de mercancía",
+      "columna": "direccion",
+      "tipo": "character varying(200)",
+      "obligatorio": false,
+      "por_defecto": null,
+      "llaves": null
+    },
+    {
+      "tabla": "proveedores",
+      "descripcion_tabla": "Proveedores de mercancía",
+      "columna": "activo",
+      "tipo": "boolean",
+      "obligatorio": true,
+      "por_defecto": "true",
+      "llaves": null
+    },
+    {
+      "tabla": "proveedores",
+      "descripcion_tabla": "Proveedores de mercancía",
+      "columna": "creado_en",
+      "tipo": "timestamp with time zone",
+      "obligatorio": true,
+      "por_defecto": "now()",
+      "llaves": null
+    },
+    {
+      "tabla": "almacenes",
+      "descripcion_tabla": "Almacenes / sucursales físicas",
+      "columna": "id_almacen",
+      "tipo": "smallint",
+      "obligatorio": true,
+      "por_defecto": "IDENTITY",
+      "llaves": "PK"
+    },
+    {
+      "tabla": "almacenes",
+      "descripcion_tabla": "Almacenes / sucursales físicas",
+      "columna": "nombre",
+      "tipo": "character varying(80)",
+      "obligatorio": true,
+      "por_defecto": null,
+      "llaves": "UK"
+    },
+    {
+      "tabla": "almacenes",
+      "descripcion_tabla": "Almacenes / sucursales físicas",
+      "columna": "ubicacion",
+      "tipo": "character varying(200)",
+      "obligatorio": false,
+      "por_defecto": null,
+      "llaves": null
+    },
+    {
+      "tabla": "almacenes",
+      "descripcion_tabla": "Almacenes / sucursales físicas",
+      "columna": "id_responsable",
+      "tipo": "integer",
+      "obligatorio": false,
+      "por_defecto": null,
+      "llaves": "FK → usuarios"
+    },
+    {
+      "tabla": "almacenes",
+      "descripcion_tabla": "Almacenes / sucursales físicas",
+      "columna": "activo",
+      "tipo": "boolean",
+      "obligatorio": true,
+      "por_defecto": "true",
+      "llaves": null
+    },
+    {
+      "tabla": "tipos_movimiento",
+      "descripcion_tabla": "Motivos de entrada y salida de mercancía",
+      "columna": "id_tipo",
+      "tipo": "smallint",
+      "obligatorio": true,
+      "por_defecto": "IDENTITY",
+      "llaves": "PK"
+    },
+    {
+      "tabla": "tipos_movimiento",
+      "descripcion_tabla": "Motivos de entrada y salida de mercancía",
+      "columna": "nombre",
+      "tipo": "character varying(40)",
+      "obligatorio": true,
+      "por_defecto": null,
+      "llaves": "UK"
+    },
+    {
+      "tabla": "tipos_movimiento",
+      "descripcion_tabla": "Motivos de entrada y salida de mercancía",
+      "columna": "naturaleza",
+      "tipo": "character varying(7)",
+      "obligatorio": true,
+      "por_defecto": null,
+      "llaves": null
+    },
+    {
+      "tabla": "tipos_movimiento",
+      "descripcion_tabla": "Motivos de entrada y salida de mercancía",
+      "columna": "requiere_proveedor",
+      "tipo": "boolean",
+      "obligatorio": true,
+      "por_defecto": "false",
+      "llaves": null
+    },
+    {
+      "tabla": "tipos_movimiento",
+      "descripcion_tabla": "Motivos de entrada y salida de mercancía",
+      "columna": "descripcion",
+      "tipo": "character varying(255)",
+      "obligatorio": false,
+      "por_defecto": null,
+      "llaves": null
+    },
+    {
+      "tabla": "productos",
+      "descripcion_tabla": "Catálogo de productos",
+      "columna": "id_producto",
+      "tipo": "integer",
+      "obligatorio": true,
+      "por_defecto": "IDENTITY",
+      "llaves": "PK"
+    },
+    {
+      "tabla": "productos",
+      "descripcion_tabla": "Catálogo de productos",
+      "columna": "sku",
+      "tipo": "character varying(20)",
+      "obligatorio": true,
+      "por_defecto": null,
+      "llaves": "UK"
+    },
+    {
+      "tabla": "productos",
+      "descripcion_tabla": "Catálogo de productos",
+      "columna": "nombre",
+      "tipo": "character varying(150)",
+      "obligatorio": true,
+      "por_defecto": null,
+      "llaves": null
+    },
+    {
+      "tabla": "productos",
+      "descripcion_tabla": "Catálogo de productos",
+      "columna": "descripcion",
+      "tipo": "text",
+      "obligatorio": false,
+      "por_defecto": null,
+      "llaves": null
+    },
+    {
+      "tabla": "productos",
+      "descripcion_tabla": "Catálogo de productos",
+      "columna": "id_categoria",
+      "tipo": "smallint",
+      "obligatorio": true,
+      "por_defecto": null,
+      "llaves": "FK → categorias"
+    },
+    {
+      "tabla": "productos",
+      "descripcion_tabla": "Catálogo de productos",
+      "columna": "unidad",
+      "tipo": "character varying(20)",
+      "obligatorio": true,
+      "por_defecto": "'pieza'::character varying",
+      "llaves": null
+    },
+    {
+      "tabla": "productos",
+      "descripcion_tabla": "Catálogo de productos",
+      "columna": "precio_compra",
+      "tipo": "numeric(12,2)",
+      "obligatorio": true,
+      "por_defecto": null,
+      "llaves": null
+    },
+    {
+      "tabla": "productos",
+      "descripcion_tabla": "Catálogo de productos",
+      "columna": "precio_venta",
+      "tipo": "numeric(12,2)",
+      "obligatorio": true,
+      "por_defecto": null,
+      "llaves": null
+    },
+    {
+      "tabla": "productos",
+      "descripcion_tabla": "Catálogo de productos",
+      "columna": "stock_minimo",
+      "tipo": "integer",
+      "obligatorio": true,
+      "por_defecto": "0",
+      "llaves": null
+    },
+    {
+      "tabla": "productos",
+      "descripcion_tabla": "Catálogo de productos",
+      "columna": "stock_maximo",
+      "tipo": "integer",
+      "obligatorio": true,
+      "por_defecto": "0",
+      "llaves": null
+    },
+    {
+      "tabla": "productos",
+      "descripcion_tabla": "Catálogo de productos",
+      "columna": "activo",
+      "tipo": "boolean",
+      "obligatorio": true,
+      "por_defecto": "true",
+      "llaves": null
+    },
+    {
+      "tabla": "productos",
+      "descripcion_tabla": "Catálogo de productos",
+      "columna": "creado_en",
+      "tipo": "timestamp with time zone",
+      "obligatorio": true,
+      "por_defecto": "now()",
+      "llaves": null
+    },
+    {
+      "tabla": "productos",
+      "descripcion_tabla": "Catálogo de productos",
+      "columna": "actualizado_en",
+      "tipo": "timestamp with time zone",
+      "obligatorio": true,
+      "por_defecto": "now()",
+      "llaves": null
+    },
+    {
+      "tabla": "producto_proveedor",
+      "descripcion_tabla": "Relación N:M producto-proveedor con costo y tiempo de entrega",
+      "columna": "id_producto",
+      "tipo": "integer",
+      "obligatorio": true,
+      "por_defecto": null,
+      "llaves": "PK, FK → productos"
+    },
+    {
+      "tabla": "producto_proveedor",
+      "descripcion_tabla": "Relación N:M producto-proveedor con costo y tiempo de entrega",
+      "columna": "id_proveedor",
+      "tipo": "integer",
+      "obligatorio": true,
+      "por_defecto": null,
+      "llaves": "PK, FK → proveedores"
+    },
+    {
+      "tabla": "producto_proveedor",
+      "descripcion_tabla": "Relación N:M producto-proveedor con costo y tiempo de entrega",
+      "columna": "costo",
+      "tipo": "numeric(12,2)",
+      "obligatorio": true,
+      "por_defecto": null,
+      "llaves": null
+    },
+    {
+      "tabla": "producto_proveedor",
+      "descripcion_tabla": "Relación N:M producto-proveedor con costo y tiempo de entrega",
+      "columna": "dias_entrega",
+      "tipo": "smallint",
+      "obligatorio": true,
+      "por_defecto": "3",
+      "llaves": null
+    },
+    {
+      "tabla": "producto_proveedor",
+      "descripcion_tabla": "Relación N:M producto-proveedor con costo y tiempo de entrega",
+      "columna": "es_principal",
+      "tipo": "boolean",
+      "obligatorio": true,
+      "por_defecto": "false",
+      "llaves": null
+    },
+    {
+      "tabla": "inventario",
+      "descripcion_tabla": "Existencias por producto y almacén (N:M)",
+      "columna": "id_producto",
+      "tipo": "integer",
+      "obligatorio": true,
+      "por_defecto": null,
+      "llaves": "PK, FK → productos"
+    },
+    {
+      "tabla": "inventario",
+      "descripcion_tabla": "Existencias por producto y almacén (N:M)",
+      "columna": "id_almacen",
+      "tipo": "smallint",
+      "obligatorio": true,
+      "por_defecto": null,
+      "llaves": "PK, FK → almacenes"
+    },
+    {
+      "tabla": "inventario",
+      "descripcion_tabla": "Existencias por producto y almacén (N:M)",
+      "columna": "existencia",
+      "tipo": "integer",
+      "obligatorio": true,
+      "por_defecto": "0",
+      "llaves": null
+    },
+    {
+      "tabla": "inventario",
+      "descripcion_tabla": "Existencias por producto y almacén (N:M)",
+      "columna": "ubicacion",
+      "tipo": "character varying(30)",
+      "obligatorio": false,
+      "por_defecto": null,
+      "llaves": null
+    },
+    {
+      "tabla": "inventario",
+      "descripcion_tabla": "Existencias por producto y almacén (N:M)",
+      "columna": "actualizado_en",
+      "tipo": "timestamp with time zone",
+      "obligatorio": true,
+      "por_defecto": "now()",
+      "llaves": null
+    },
+    {
+      "tabla": "movimientos",
+      "descripcion_tabla": "Kardex: historial de entradas y salidas",
+      "columna": "id_movimiento",
+      "tipo": "integer",
+      "obligatorio": true,
+      "por_defecto": "IDENTITY",
+      "llaves": "PK"
+    },
+    {
+      "tabla": "movimientos",
+      "descripcion_tabla": "Kardex: historial de entradas y salidas",
+      "columna": "folio",
+      "tipo": "character varying(12)",
+      "obligatorio": false,
+      "por_defecto": "GENERADA",
+      "llaves": "UK"
+    },
+    {
+      "tabla": "movimientos",
+      "descripcion_tabla": "Kardex: historial de entradas y salidas",
+      "columna": "id_tipo",
+      "tipo": "smallint",
+      "obligatorio": true,
+      "por_defecto": null,
+      "llaves": "FK → tipos_movimiento"
+    },
+    {
+      "tabla": "movimientos",
+      "descripcion_tabla": "Kardex: historial de entradas y salidas",
+      "columna": "id_producto",
+      "tipo": "integer",
+      "obligatorio": true,
+      "por_defecto": null,
+      "llaves": "FK → productos"
+    },
+    {
+      "tabla": "movimientos",
+      "descripcion_tabla": "Kardex: historial de entradas y salidas",
+      "columna": "id_almacen",
+      "tipo": "smallint",
+      "obligatorio": true,
+      "por_defecto": null,
+      "llaves": "FK → almacenes"
+    },
+    {
+      "tabla": "movimientos",
+      "descripcion_tabla": "Kardex: historial de entradas y salidas",
+      "columna": "id_proveedor",
+      "tipo": "integer",
+      "obligatorio": false,
+      "por_defecto": null,
+      "llaves": "FK → proveedores"
+    },
+    {
+      "tabla": "movimientos",
+      "descripcion_tabla": "Kardex: historial de entradas y salidas",
+      "columna": "id_usuario",
+      "tipo": "integer",
+      "obligatorio": true,
+      "por_defecto": null,
+      "llaves": "FK → usuarios"
+    },
+    {
+      "tabla": "movimientos",
+      "descripcion_tabla": "Kardex: historial de entradas y salidas",
+      "columna": "cantidad",
+      "tipo": "integer",
+      "obligatorio": true,
+      "por_defecto": null,
+      "llaves": null
+    },
+    {
+      "tabla": "movimientos",
+      "descripcion_tabla": "Kardex: historial de entradas y salidas",
+      "columna": "costo_unitario",
+      "tipo": "numeric(12,2)",
+      "obligatorio": true,
+      "por_defecto": "0",
+      "llaves": null
+    },
+    {
+      "tabla": "movimientos",
+      "descripcion_tabla": "Kardex: historial de entradas y salidas",
+      "columna": "existencia_resultante",
+      "tipo": "integer",
+      "obligatorio": true,
+      "por_defecto": null,
+      "llaves": null
+    },
+    {
+      "tabla": "movimientos",
+      "descripcion_tabla": "Kardex: historial de entradas y salidas",
+      "columna": "referencia",
+      "tipo": "character varying(60)",
+      "obligatorio": false,
+      "por_defecto": null,
+      "llaves": null
+    },
+    {
+      "tabla": "movimientos",
+      "descripcion_tabla": "Kardex: historial de entradas y salidas",
+      "columna": "observaciones",
+      "tipo": "character varying(255)",
+      "obligatorio": false,
+      "por_defecto": null,
+      "llaves": null
+    },
+    {
+      "tabla": "movimientos",
+      "descripcion_tabla": "Kardex: historial de entradas y salidas",
+      "columna": "fecha",
+      "tipo": "timestamp with time zone",
+      "obligatorio": true,
+      "por_defecto": "now()",
+      "llaves": null
+    },
+    {
+      "tabla": "bitacora",
+      "descripcion_tabla": "Auditoría de acciones de los usuarios",
+      "columna": "id_bitacora",
+      "tipo": "bigint",
+      "obligatorio": true,
+      "por_defecto": "IDENTITY",
+      "llaves": "PK"
+    },
+    {
+      "tabla": "bitacora",
+      "descripcion_tabla": "Auditoría de acciones de los usuarios",
+      "columna": "id_usuario",
+      "tipo": "integer",
+      "obligatorio": false,
+      "por_defecto": null,
+      "llaves": "FK → usuarios"
+    },
+    {
+      "tabla": "bitacora",
+      "descripcion_tabla": "Auditoría de acciones de los usuarios",
+      "columna": "accion",
+      "tipo": "character varying(30)",
+      "obligatorio": true,
+      "por_defecto": null,
+      "llaves": null
+    },
+    {
+      "tabla": "bitacora",
+      "descripcion_tabla": "Auditoría de acciones de los usuarios",
+      "columna": "modulo",
+      "tipo": "character varying(30)",
+      "obligatorio": true,
+      "por_defecto": null,
+      "llaves": null
+    },
+    {
+      "tabla": "bitacora",
+      "descripcion_tabla": "Auditoría de acciones de los usuarios",
+      "columna": "descripcion",
+      "tipo": "character varying(255)",
+      "obligatorio": false,
+      "por_defecto": null,
+      "llaves": null
+    },
+    {
+      "tabla": "bitacora",
+      "descripcion_tabla": "Auditoría de acciones de los usuarios",
+      "columna": "fecha",
+      "tipo": "timestamp with time zone",
+      "obligatorio": true,
+      "por_defecto": "now()",
+      "llaves": null
+    }
+  ]
+}

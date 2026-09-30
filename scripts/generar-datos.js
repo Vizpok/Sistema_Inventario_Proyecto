@@ -207,6 +207,7 @@ let folioFactura = 18230;
 let folioVenta = 50112;
 
 function mov(minutosAtras, sku, alm, tipo, cantidad, correo, { costo = null, rfc = null, ref = null, obs = null } = {}) {
+  if (minutosAtras < 1) throw new Error(`Fecha en el futuro para ${sku} (${minutosAtras} min)`);
   const t = tipos.find((x) => x[0] === tipo);
   const delta = t[1] === 'ENTRADA' ? cantidad : -cantidad;
   stock.set(k(sku, alm), get(sku, alm) + delta);
@@ -242,7 +243,7 @@ for (const [sku, , , , pc, , mn, mx] of productos) {
 const productosPorSku = Object.fromEntries(productos.map((p) => [p[0], p]));
 const skus = productos.map((p) => p[0]);
 minutos = 59 * 1440 + 500;
-while (minutos > 90) {
+while (minutos > 300) {
   const alm = rnd() < 0.6 ? almNombres[0] : elegir(almNombres.slice(1));
   const correo = elegir(usuariosPorAlmacen[alm]);
   const dado = rnd();
@@ -279,6 +280,7 @@ while (minutos > 90) {
 
 // 3) Situaciones para el semáforo del dashboard (últimas horas)
 const central = almNombres[0];
+minutos = 240; // deja margen para que todos los movimientos queden en el pasado
 for (const sku of ['COM-LAP-003', 'MOB-ARC-001']) { // agotar
   for (const alm of almNombres) {
     const e = get(sku, alm);

@@ -8,7 +8,9 @@
     "start": "node src/app.js",
     "dev": "node --watch src/app.js",
     "sql": "node scripts/ejecutar-sql.js",
-    "db:datos": "node scripts/generar-datos.js"
+    "db:datos": "node scripts/generar-datos.js",
+    "evidencias": "node scripts/evidencias.js",
+    "reporte": "node scripts/generar-reporte.js"
   },
   "engines": {
     "node": ">=18"
@@ -22,5 +24,8 @@
     "ejs": "^6.0.1",
     "express": "^5.2.1",
     "express-session": "^1.19.0"
+  },
+  "devDependencies": {
+    "playwright-core": "^1.63.0"
   }
 }
