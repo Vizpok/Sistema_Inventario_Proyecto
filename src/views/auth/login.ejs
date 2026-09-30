@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Iniciar sesión · Nexo Inventario</title>
+  <link rel="icon" href="/img/logo.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/css/app.css">
+  <script>try { const t = localStorage.getItem('tema'); if (t) document.documentElement.dataset.theme = t; } catch (e) {}</script>
+</head>
+<body class="login-body">
+  <div class="login">
+    <section class="login-panel">
+      <div class="marca marca-grande">
+        <img src="/img/logo.svg" alt="" width="44" height="44">
+        <span><strong>Nexo</strong><small>Inventario</small></span>
+      </div>
+      <h1>Bienvenido de nuevo</h1>
+      <p class="sub">Ingresa con tu cuenta para administrar el inventario de Distribuidora Nexo.</p>
+      <% if (typeof error !== 'undefined' && error) { %>
+        <div class="alerta alerta-error" role="alert"><%- icono('alerta') %><span><%= error %></span></div>
+      <% } %>
+      <form method="post" action="/login" class="form">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <label class="campo">
+          <span>Correo electrónico</span>
+          <input type="email" name="correo" value="<%= correo %>" required autofocus autocomplete="username" placeholder="nombre@nexo.mx">
+        </label>
+        <label class="campo">
+          <span>Contraseña</span>
+          <input type="password" name="password" required autocomplete="current-password" placeholder="••••••••">
+        </label>
+        <button class="btn btn-primario btn-bloque">Iniciar sesión</button>
+      </form>
+      <details class="demo">
+        <summary>Cuentas de demostración</summary>
+        <table>
+          <tr><td><span class="rol-chip rol-admin">Admin</span></td><td><code>admin@nexo.mx</code></td><td><code>Admin2026!</code></td></tr>
+          <tr><td><span class="rol-chip rol-usuario">Usuario</span></td><td><code>jorge.salinas@nexo.mx</code></td><td><code>Nexo2026!</code></td></tr>
+        </table>
+      </details>
+    </section>
+    <section class="login-arte" aria-hidden="true">
+      <div class="login-arte-contenido">
+        <p class="eyebrow">PostgreSQL · Neon</p>
+        <h2>Control de inventario en la nube</h2>
+        <ul>
+          <li><%- icono('check') %> Existencias por almacén en tiempo real</li>
+          <li><%- icono('check') %> Kardex de entradas y salidas</li>
+          <li><%- icono('check') %> Roles y permisos diferenciados</li>
+          <li><%- icono('check') %> Vistas con CTE y funciones PL/pgSQL</li>
+        </ul>
+      </div>
+    </section>
+  </div>
+  <script src="/js/app.js"></script>
+</body>
+</html>

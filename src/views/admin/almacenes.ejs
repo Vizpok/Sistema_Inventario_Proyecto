@@ -1,0 +1,42 @@
+<%- include('../partials/inicio') %>
+<% const f = editar || {}; %>
+<div class="page-head">
+  <div><p class="eyebrow">Administración</p><h1>Almacenes</h1><p class="sub">Valor por almacén con <code>fn_valor_inventario(NULL, id_almacen)</code>.</p></div>
+</div>
+<section class="grid grid-2-1">
+  <article class="card card-sin-padding">
+    <div class="tabla-scroll">
+      <table class="tabla">
+        <thead><tr><th>Almacén</th><th>Responsable</th><th class="num">Productos</th><th class="num">Unidades</th><th class="num">Valor</th><th>Estado</th><th></th></tr></thead>
+        <tbody>
+          <% almacenes.forEach(a => { %>
+            <tr class="<%= a.activo ? '' : 'fila-inactiva' %>">
+              <td><div class="celda-producto"><a href="/inventario?almacen=<%= a.id_almacen %>"><%= a.nombre %></a><span class="muted"><%= a.ubicacion %></span></div></td>
+              <td><%= a.responsable || '—' %></td>
+              <td class="num"><%= a.productos %></td>
+              <td class="num"><%= numero(a.unidades) %></td>
+              <td class="num"><strong><%= moneda(a.valor) %></strong></td>
+              <td><span class="badge <%= a.activo ? 'badge-verde' : 'badge-gris' %>"><%= a.activo ? 'Activo' : 'Inactivo' %></span></td>
+              <td><a class="btn btn-fantasma btn-sm" href="/admin/almacenes?editar=<%= a.id_almacen %>"><%- icono('editar') %></a></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  </article>
+  <article class="card">
+    <header class="card-head"><h2><%= editar ? 'Editar almacén' : 'Nuevo almacén' %></h2><% if (editar) { %><a class="enlace" href="/admin/almacenes">Cancelar</a><% } %></header>
+    <form method="post" action="/admin/almacenes" class="form">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <% if (editar) { %><input type="hidden" name="id_almacen" value="<%= f.id_almacen %>"><% } %>
+      <label class="campo"><span>Nombre *</span><input type="text" name="nombre" value="<%= f.nombre || '' %>" required maxlength="80"></label>
+      <label class="campo"><span>Ubicación</span><input type="text" name="ubicacion" value="<%= f.ubicacion || '' %>" maxlength="200"></label>
+      <label class="campo"><span>Responsable</span>
+        <select name="id_responsable"><option value="">Sin responsable</option><% usuarios.forEach(u => { %><option value="<%= u.id_usuario %>" <%= f.id_responsable === u.id_usuario ? 'selected' : '' %>><%= u.nombre %> <%= u.apellidos %></option><% }) %></select>
+      </label>
+      <% if (editar) { %><label class="check"><input type="checkbox" name="activo" <%= f.activo ? 'checked' : '' %>> Activo</label><% } %>
+      <button class="btn btn-primario"><%- icono('check') %> <%= editar ? 'Guardar cambios' : 'Crear almacén' %></button>
+    </form>
+  </article>
+</section>
+<%- include('../partials/fin') %>

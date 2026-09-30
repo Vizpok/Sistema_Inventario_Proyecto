@@ -1,0 +1,16 @@
+<% if (usuario) { %>
+<%- include('partials/inicio') %>
+<% } else { %>
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title><%= titulo %> · Nexo Inventario</title><link rel="stylesheet" href="/css/app.css"></head><body class="login-body">
+<% } %>
+<div class="vacio vacio-grande">
+  <div class="codigo-error"><%= codigo %></div>
+  <h1><%= codigo === 404 ? 'Página no encontrada' : codigo === 403 ? 'Acceso denegado' : 'Algo salió mal' %></h1>
+  <p><%= mensaje %></p>
+  <a href="<%= usuario ? '/dashboard' : '/login' %>" class="btn btn-primario"><%- icono('flecha') %> Volver al inicio</a>
+</div>
+<% if (usuario) { %>
+<%- include('partials/fin') %>
+<% } else { %>
+</body></html>
+<% } %>

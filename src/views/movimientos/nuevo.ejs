@@ -1,0 +1,114 @@
+<%- include('../partials/inicio') %>
+<%
+  const porCategoria = {};
+  productos.forEach(p => { (porCategoria[p.categoria] = porCategoria[p.categoria] || []).push(p); });
+%>
+<div>
+  <a class="volver" href="/movimientos"><%- icono('flecha') %> Movimientos</a>
+  <div class="page-head">
+    <div><h1>Registrar movimiento</h1><p class="sub">Se guarda con la función de inserción <code>fn_registrar_movimiento()</code>: valida existencias y actualiza el inventario en una sola operación atómica.</p></div>
+  </div>
+</div>
+
+<% if (typeof error !== 'undefined' && error) { %><div class="alerta alerta-error" role="alert"><%- icono('alerta') %><span><%= error %></span></div><% } %>
+
+<section class="grid grid-2-1">
+  <form method="post" action="/movimientos" class="card form" id="formMovimiento">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <div class="form-grid">
+      <label class="campo col-completa"><span>Tipo de movimiento *</span>
+        <select name="id_tipo" id="tipo" required>
+          <option value="">Selecciona…</option>
+          <% ['ENTRADA', 'SALIDA'].forEach(nat => { %>
+            <optgroup label="<%= nat === 'ENTRADA' ? 'Entradas (+)' : 'Salidas (−)' %>">
+              <% tipos.filter(t => t.naturaleza === nat).forEach(t => { %>
+                <option value="<%= t.id_tipo %>" data-naturaleza="<%= t.naturaleza %>" data-proveedor="<%= t.requiere_proveedor %>" <%= String(mov.id_tipo) === String(t.id_tipo) ? 'selected' : '' %>><%= t.nombre %></option>
+              <% }) %>
+            </optgroup>
+          <% }) %>
+        </select>
+      </label>
+      <label class="campo col-completa"><span>Producto *</span>
+        <select name="id_producto" id="producto" required>
+          <option value="">Selecciona…</option>
+          <% Object.entries(porCategoria).forEach(([cat, lista]) => { %>
+            <optgroup label="<%= cat %>">
+              <% lista.forEach(p => { %><option value="<%= p.id_producto %>" <%= String(mov.id_producto) === String(p.id_producto) ? 'selected' : '' %>><%= p.sku %> · <%= p.nombre %></option><% }) %>
+            </optgroup>
+          <% }) %>
+        </select>
+      </label>
+      <label class="campo"><span>Almacén *</span>
+        <select name="id_almacen" id="almacen" required>
+          <option value="">Selecciona…</option>
+          <% almacenes.forEach(a => { %><option value="<%= a.id_almacen %>" <%= String(mov.id_almacen) === String(a.id_almacen) ? 'selected' : '' %>><%= a.nombre %></option><% }) %>
+        </select>
+      </label>
+      <label class="campo"><span>Cantidad *</span><input type="number" name="cantidad" id="cantidad" min="1" step="1" value="<%= mov.cantidad || 1 %>" required></label>
+      <label class="campo" id="campoProveedor"><span>Proveedor <span id="provRequerido">*</span></span>
+        <select name="id_proveedor" id="proveedor">
+          <option value="">— Ninguno —</option>
+          <% proveedores.forEach(p => { %><option value="<%= p.id_proveedor %>" <%= String(mov.id_proveedor) === String(p.id_proveedor) ? 'selected' : '' %>><%= p.razon_social %></option><% }) %>
+        </select>
+      </label>
+      <label class="campo"><span>Costo unitario</span><input type="number" name="costo_unitario" id="costo" min="0" step="0.01" value="<%= mov.costo_unitario ?? '' %>" placeholder="Precio de compra"><small>Vacío = precio de compra del catálogo.</small></label>
+      <label class="campo"><span>Referencia</span><input type="text" name="referencia" maxlength="60" value="<%= mov.referencia || '' %>" placeholder="Factura, orden de compra, nota…"></label>
+      <label class="campo col-completa"><span>Observaciones</span><textarea name="observaciones" maxlength="255"><%= mov.observaciones || '' %></textarea></label>
+    </div>
+    <div class="form-acciones">
+      <a class="btn btn-fantasma" href="/movimientos">Cancelar</a>
+      <button class="btn btn-primario"><%- icono('check') %> Registrar</button>
+    </div>
+  </form>
+
+  <aside class="card" aria-live="polite">
+    <header class="card-head"><div><h2>Vista previa</h2><p class="sub">Existencia en el almacén seleccionado</p></div></header>
+    <div class="info-existencia">
+      <div><span>Actual</span><strong id="existActual">—</strong></div>
+      <div><span>Movimiento</span><strong id="existMov">—</strong></div>
+      <div><span>Resultante</span><strong id="existResultado">—</strong></div>
+    </div>
+    <p id="avisoStock" class="alerta alerta-error" style="margin-top: 14px; display: none"><%- icono('alerta') %><span>La salida supera la existencia: la función la rechazará.</span></p>
+    <div class="ayuda" style="margin-top: 16px"><%- icono('basedatos') %><span>Registrado por <strong><%= usuario.nombre %> <%= usuario.apellidos %></strong>. La base de datos bloquea la fila de inventario (<code>SELECT … FOR UPDATE</code>) para que dos salidas simultáneas no dejen existencias negativas.</span></div>
+  </aside>
+</section>
+
+<script>
+(function () {
+  const $ = (id) => document.getElementById(id);
+  const tipo = $('tipo'), producto = $('producto'), almacen = $('almacen'), cantidad = $('cantidad'), proveedor = $('proveedor');
+  let actual = null, principal = null;
+  const fmt = (n) => Number(n).toLocaleString('es-MX');
+
+  function naturaleza() { return tipo.selectedOptions[0]?.dataset.naturaleza || null; }
+  function pintar() {
+    const req = tipo.selectedOptions[0]?.dataset.proveedor === 'true';
+    proveedor.required = req;
+    $('provRequerido').style.display = req ? '' : 'none';
+    const nat = naturaleza(); const c = parseInt(cantidad.value, 10) || 0;
+    $('existActual').textContent = actual === null ? '—' : fmt(actual);
+    $('existMov').textContent = nat ? (nat === 'ENTRADA' ? '+' : '−') + fmt(c) : '—';
+    $('existMov').className = nat === 'ENTRADA' ? 'txt-entrada' : nat === 'SALIDA' ? 'txt-salida' : '';
+    const res = actual === null || !nat ? null : actual + (nat === 'ENTRADA' ? c : -c);
+    $('existResultado').textContent = res === null ? '—' : fmt(res);
+    $('avisoStock').style.display = res !== null && res < 0 ? 'flex' : 'none';
+  }
+  async function consultar() {
+    actual = null;
+    if (producto.value && almacen.value) {
+      const r = await fetch(`/movimientos/existencia?producto=${producto.value}&almacen=${almacen.value}`);
+      const d = await r.json();
+      actual = Number(d.existencia ?? 0);
+      principal = d.proveedor_principal;
+      $('costo').placeholder = d.precio_compra ? `$${Number(d.precio_compra).toLocaleString('es-MX')} (compra)` : 'Precio de compra';
+      if (proveedor.required && !proveedor.value && principal) proveedor.value = principal;
+    }
+    pintar();
+  }
+  tipo.addEventListener('change', () => { pintar(); if (proveedor.required && !proveedor.value && principal) proveedor.value = principal; });
+  [producto, almacen].forEach((s) => s.addEventListener('change', consultar));
+  cantidad.addEventListener('input', pintar);
+  consultar();
+})();
+</script>
+<%- include('../partials/fin') %>

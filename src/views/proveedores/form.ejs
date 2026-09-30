@@ -1,0 +1,24 @@
+<%- include('../partials/inicio') %>
+<% const p = proveedor; const edicion = !!p.id_proveedor; %>
+<div>
+  <a class="volver" href="<%= edicion ? '/proveedores/' + p.id_proveedor : '/proveedores' %>"><%- icono('flecha') %> <%= edicion ? 'Volver al proveedor' : 'Proveedores' %></a>
+  <div class="page-head"><div><h1><%= titulo %></h1></div></div>
+</div>
+<% if (typeof error !== 'undefined' && error) { %><div class="alerta alerta-error"><%- icono('alerta') %><span><%= error %></span></div><% } %>
+<form method="post" action="<%= edicion ? '/proveedores/' + p.id_proveedor : '/proveedores' %>" class="card form" style="max-width: 860px">
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+  <div class="form-grid">
+    <label class="campo col-completa"><span>Razón social *</span><input type="text" name="razon_social" value="<%= p.razon_social || '' %>" required maxlength="150"></label>
+    <label class="campo"><span>RFC *</span><input type="text" name="rfc" value="<%= p.rfc || '' %>" required minlength="12" maxlength="13" style="text-transform: uppercase"><small>12 caracteres (persona moral) o 13 (persona física).</small></label>
+    <label class="campo"><span>Contacto</span><input type="text" name="contacto" value="<%= p.contacto || '' %>" maxlength="100"></label>
+    <label class="campo"><span>Teléfono</span><input type="text" name="telefono" value="<%= p.telefono || '' %>" maxlength="20"></label>
+    <label class="campo"><span>Correo</span><input type="email" name="correo" value="<%= p.correo || '' %>" maxlength="120"></label>
+    <label class="campo"><span>Ciudad</span><input type="text" name="ciudad" value="<%= p.ciudad || '' %>" maxlength="80"></label>
+    <label class="campo"><span>Dirección</span><input type="text" name="direccion" value="<%= p.direccion || '' %>" maxlength="200"></label>
+  </div>
+  <div class="form-acciones">
+    <a class="btn btn-fantasma" href="<%= edicion ? '/proveedores/' + p.id_proveedor : '/proveedores' %>">Cancelar</a>
+    <button class="btn btn-primario"><%- icono('check') %> Guardar proveedor</button>
+  </div>
+</form>
+<%- include('../partials/fin') %>

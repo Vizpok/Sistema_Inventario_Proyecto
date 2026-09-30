@@ -1,0 +1,26 @@
+{
+  "name": "nexo-inventario",
+  "version": "1.0.0",
+  "description": "Sistema de inventario sobre Neon PostgreSQL — Proyecto Unidad 1, Bases de Datos Relacionales",
+  "main": "src/app.js",
+  "private": true,
+  "scripts": {
+    "start": "node src/app.js",
+    "dev": "node --watch src/app.js",
+    "sql": "node scripts/ejecutar-sql.js",
+    "db:datos": "node scripts/generar-datos.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "@neondatabase/serverless": "^1.1.0",
+    "bcryptjs": "^3.0.3",
+    "chart.js": "^4.5.1",
+    "dotenv": "^18.0.5",
+    "ejs": "^6.0.1",
+    "express": "^5.2.1",
+    "express-session": "^1.19.0"
+  }
+}

@@ -1,0 +1,91 @@
+<%- include('../partials/inicio') %>
+<%
+  const etiquetaEstado = { 'SIN STOCK': 'Agotado', BAJO: 'Bajo', NORMAL: 'Normal', EXCESO: 'Exceso' };
+  const totalProductos = Object.values(conteo).reduce((a, b) => a + b, 0);
+%>
+<div class="page-head">
+  <div>
+    <h1>Inventario</h1>
+    <p class="sub">Existencias consolidadas desde la vista <code>vw_estado_inventario</code><%= almacenSel ? ` · detalle de ${almacenSel.nombre}` : '' %>.</p>
+  </div>
+  <div class="acciones">
+    <a class="btn btn-secundario" href="<%= urlCon('/inventario/exportar.csv', filtros) %>"><%- icono('descargar') %> CSV</a>
+    <a class="btn btn-primario" href="/movimientos/nuevo"><%- icono('mas') %> Registrar movimiento</a>
+  </div>
+</div>
+
+<nav class="segmentos" aria-label="Filtrar por estado">
+  <a href="<%= urlCon('/inventario', filtros, { estado: '' }) %>" class="<%= !filtros.estado ? 'activo' : '' %>">Todos<span class="conteo"><%= totalProductos %></span></a>
+  <% ESTADOS.forEach(e => { %>
+    <a href="<%= urlCon('/inventario', filtros, { estado: e }) %>" class="<%= filtros.estado === e ? 'activo' : '' %>"><%= etiquetaEstado[e] %><span class="conteo"><%= conteo[e] || 0 %></span></a>
+  <% }) %>
+</nav>
+
+<form class="filtros" method="get">
+  <input type="hidden" name="estado" value="<%= filtros.estado %>">
+  <label class="campo campo-ancho"><span>Buscar</span><input type="search" name="q" value="<%= filtros.q %>" placeholder="Nombre o SKU"></label>
+  <label class="campo"><span>Categoría</span>
+    <select name="categoria" data-auto-enviar>
+      <option value="">Todas</option>
+      <% categorias.forEach(c => { %><option value="<%= c.id_categoria %>" <%= String(c.id_categoria) === filtros.categoria ? 'selected' : '' %>><%= c.nombre %></option><% }) %>
+    </select>
+  </label>
+  <label class="campo"><span>Almacén</span>
+    <select name="almacen" data-auto-enviar>
+      <option value="">Todos (consolidado)</option>
+      <% almacenes.forEach(a => { %><option value="<%= a.id_almacen %>" <%= String(a.id_almacen) === filtros.almacen ? 'selected' : '' %>><%= a.nombre %></option><% }) %>
+    </select>
+  </label>
+  <div class="botones">
+    <button class="btn btn-primario"><%- icono('buscar') %> Filtrar</button>
+    <a class="btn btn-fantasma" href="/inventario">Limpiar</a>
+  </div>
+</form>
+
+<article class="card card-sin-padding">
+  <div class="tabla-scroll">
+    <table class="tabla">
+      <thead>
+        <tr>
+          <th>Producto</th><th>Categoría</th>
+          <% if (almacenSel) { %><th>Ubicación</th><th class="num">Existencia</th><th class="num">Mínimo</th><th class="num">Valor</th><th>Estado global</th>
+          <% } else { %><th class="num">Existencia</th><th class="num">Mín / Máx</th><th class="num">Valor</th><th class="num">Salidas 30 d</th><th class="num">Cobertura</th><th>Estado</th><% } %>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <% if (!filas.length) { %><tr><td colspan="9" class="vacio">No hay productos con esos filtros.</td></tr><% } %>
+        <% filas.forEach(f => { const estado = f.estado || f.estado_global; %>
+          <tr>
+            <td><div class="celda-producto"><a href="/catalogo/<%= f.id_producto %>"><%= f.nombre %></a><span class="muted mono"><%= f.sku %> · <%= f.unidad %></span></div></td>
+            <td><span class="punto" style="background: <%= f.color_categoria %>"></span><%= f.categoria %></td>
+            <% if (almacenSel) { %>
+              <td class="mono"><%= f.ubicacion || '—' %></td>
+              <td class="num"><strong><%= numero(f.existencia) %></strong></td>
+              <td class="num muted"><%= numero(f.stock_minimo) %></td>
+              <td class="num"><%= moneda(f.valor) %></td>
+            <% } else { %>
+              <td class="num"><strong><%= numero(f.existencia_total) %></strong><div class="muted" style="font-size:12px"><%= f.almacenes_con_stock %> almacén(es)</div></td>
+              <td class="num muted"><%= numero(f.stock_minimo) %> / <%= f.stock_maximo ? numero(f.stock_maximo) : '—' %></td>
+              <td class="num"><%= moneda(f.valor_inventario) %></td>
+              <td class="num"><%= numero(f.salidas_30d) %></td>
+              <td class="num"><%= f.dias_cobertura !== null ? `${f.dias_cobertura} d` : '—' %></td>
+            <% } %>
+            <td><span class="badge badge-<%= claseEstado(estado) %>"><%= etiquetaEstado[estado] %></span></td>
+            <td><a class="btn btn-fantasma btn-sm" href="/movimientos/nuevo?producto=<%= f.id_producto %><%= filtros.almacen ? '&almacen=' + filtros.almacen : '' %>" title="Registrar movimiento"><%- icono('movimientos') %></a></td>
+          </tr>
+        <% }) %>
+      </tbody>
+      <% if (filas.length) { %>
+      <tfoot>
+        <tr>
+          <td colspan="2"><%= filas.length %> productos</td>
+          <% if (almacenSel) { %><td></td><td class="num"><%= numero(totalUnidades) %></td><td></td><td class="num"><%= moneda(totalValor) %></td><td colspan="2"></td>
+          <% } else { %><td class="num"><%= numero(totalUnidades) %></td><td></td><td class="num"><%= moneda(totalValor) %></td><td colspan="4"></td><% } %>
+        </tr>
+      </tfoot>
+      <% } %>
+    </table>
+  </div>
+</article>
+<%- include('../partials/fin') %>

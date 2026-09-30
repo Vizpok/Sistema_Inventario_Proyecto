@@ -1,0 +1,34 @@
+<%- include('../partials/inicio') %>
+<div class="page-head">
+  <div><h1>Proveedores</h1><p class="sub"><%= proveedores.length %> proveedores registrados.</p></div>
+  <div class="acciones"><% if (esAdmin) { %><a class="btn btn-primario" href="/proveedores/nuevo"><%- icono('mas') %> Nuevo proveedor</a><% } %></div>
+</div>
+
+<form class="filtros" method="get">
+  <label class="campo campo-ancho"><span>Buscar</span><input type="search" name="q" value="<%= q %>" placeholder="Razón social, RFC o ciudad"></label>
+  <div class="botones"><button class="btn btn-primario"><%- icono('buscar') %> Buscar</button><a class="btn btn-fantasma" href="/proveedores">Limpiar</a></div>
+</form>
+
+<article class="card card-sin-padding">
+  <div class="tabla-scroll">
+    <table class="tabla">
+      <thead><tr><th>Proveedor</th><th>RFC</th><th>Contacto</th><th>Ciudad</th><th class="num">Productos</th><th class="num">Compras 30 d</th><th>Última entrada</th><th>Estado</th></tr></thead>
+      <tbody>
+        <% if (!proveedores.length) { %><tr><td colspan="8" class="vacio">Sin resultados.</td></tr><% } %>
+        <% proveedores.forEach(p => { %>
+          <tr class="<%= p.activo ? '' : 'fila-inactiva' %>">
+            <td><div class="celda-producto"><a href="/proveedores/<%= p.id_proveedor %>"><%= p.razon_social %></a><span class="muted"><%= p.correo || '' %></span></div></td>
+            <td class="mono"><%= p.rfc %></td>
+            <td><%= p.contacto || '—' %><div class="muted" style="font-size: 12px"><%= p.telefono || '' %></div></td>
+            <td><%= p.ciudad || '—' %></td>
+            <td class="num"><%= p.productos %></td>
+            <td class="num"><%= moneda(p.compras_30d) %></td>
+            <td class="muted"><%= relativo(p.ultima_compra) %></td>
+            <td><span class="badge <%= p.activo ? 'badge-verde' : 'badge-gris' %>"><%= p.activo ? 'Activo' : 'Inactivo' %></span></td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+</article>
+<%- include('../partials/fin') %>

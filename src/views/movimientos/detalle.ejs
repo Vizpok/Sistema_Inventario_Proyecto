@@ -1,0 +1,35 @@
+<%- include('../partials/inicio') %>
+<% const m = mov; const entrada = m.naturaleza === 'ENTRADA'; %>
+<div class="no-imprimir">
+  <a class="volver" href="/movimientos"><%- icono('flecha') %> Movimientos</a>
+</div>
+<article class="card comprobante">
+  <div class="comprobante-cabecera">
+    <div>
+      <p class="eyebrow">Comprobante de <%= entrada ? 'entrada' : 'salida' %></p>
+      <h1 class="mono"><%= m.folio %></h1>
+      <p class="sub"><%= fechaHora(m.fecha) %></p>
+    </div>
+    <div class="num">
+      <span class="tipo tipo-<%= m.naturaleza.toLowerCase() %>"><%- icono(entrada ? 'entrada' : 'salida') %><%= m.tipo %></span>
+      <div class="cantidad-grande <%= entrada ? 'txt-entrada' : 'txt-salida' %>"><%= entrada ? '+' : '−' %><%= numero(m.cantidad) %></div>
+      <span class="muted"><%= m.unidad %></span>
+    </div>
+  </div>
+  <dl class="datos">
+    <div><dt>Producto</dt><dd><a href="/catalogo/<%= m.id_producto %>"><%= m.producto %></a> <span class="muted mono">(<%= m.sku %>)</span></dd></div>
+    <div><dt>Almacén</dt><dd><%= m.almacen %><div class="muted" style="font-weight: 400"><%= m.direccion_almacen %></div></dd></div>
+    <div><dt>Costo unitario</dt><dd><%= moneda(m.costo_unitario) %></dd></div>
+    <div><dt>Importe</dt><dd><%= moneda(m.cantidad * m.costo_unitario) %></dd></div>
+    <div><dt>Existencia resultante</dt><dd><%= numero(m.existencia_resultante) %> <%= m.unidad %></dd></div>
+    <div><dt>Proveedor</dt><dd><%= m.proveedor ? `${m.proveedor} (${m.rfc})` : '—' %></dd></div>
+    <div><dt>Referencia</dt><dd class="mono"><%= m.referencia || '—' %></dd></div>
+    <div><dt>Registrado por</dt><dd><%= m.usuario %><div class="muted" style="font-weight: 400"><%= m.puesto || '' %></div></dd></div>
+    <div style="grid-column: 1 / -1"><dt>Observaciones</dt><dd style="font-weight: 400"><%= m.observaciones || '—' %></dd></div>
+  </dl>
+  <div class="form-acciones no-imprimir" style="margin-top: 20px">
+    <button class="btn btn-secundario" onclick="window.print()"><%- icono('imprimir') %> Imprimir</button>
+    <a class="btn btn-primario" href="/movimientos/nuevo?producto=<%= m.id_producto %>&almacen=<%= m.id_almacen %>"><%- icono('mas') %> Otro movimiento</a>
+  </div>
+</article>
+<%- include('../partials/fin') %>
