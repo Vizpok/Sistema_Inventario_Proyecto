@@ -10,7 +10,8 @@
     "sql": "node scripts/ejecutar-sql.js",
     "db:datos": "node scripts/generar-datos.js",
     "evidencias": "node scripts/evidencias.js",
-    "reporte": "node scripts/generar-reporte.js"
+    "reporte": "node scripts/generar-reporte.js",
+    "evidencias:dividir": "node scripts/dividir-evidencias.js"
   },
   "engines": {
     "node": ">=18"

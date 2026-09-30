@@ -1,0 +1,8 @@
+{
+  "ev1-neon-proyecto.png": "Consola de Neon: proyecto nexo-inventario-u1 (PostgreSQL 18, AWS us-east-2), rama main.",
+  "ev1-neon-base-datos.png": "Consola de Neon: base de datos nexo_inventario y su propietario nexo_inventario_owner.",
+  "ev1-dbeaver-conexiones.png": "DBeaver: una conexión a Neon por cada usuario (owner, dev_ana, usr_carlos, app_nexo).",
+  "ev2-neon-tablas.png": "Consola de Neon → Tables: las 10 tablas del esquema public.",
+  "ev4-neon-roles.png": "Consola de Neon → Roles: usuarios de base de datos del proyecto.",
+  "er-dbeaver.png": "Diagrama ER generado automáticamente por DBeaver a partir de las llaves foráneas en Neon."
+}

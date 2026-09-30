@@ -41,6 +41,8 @@ figure.alta img { max-height: 235mm; }
 figure.diagrama { break-before: page; break-after: page; margin: 0; }
 .rotado { position: relative; height: 238mm; overflow: visible; }
 .rotado img { position: absolute; width: 236mm; max-width: none; max-height: none; border: 0; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-90deg); }
+figure.manual img { max-height: 150mm; }
+.manual-titulo { color: #312e81; }
 figcaption { font-size: 8pt; color: #6b7280; margin-top: 4px; }
 .galeria { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 12px; }
 .galeria figure { margin: 4px 0; }
@@ -182,6 +184,7 @@ figcaption { font-size: 8pt; color: #6b7280; margin-top: 4px; }
 
   <figure class="diagrama"><div class="rotado"><img src="../diagrama_er.svg" alt="Diagrama entidad-relación"></div><figcaption>Figura 1. Modelo entidad-relación de <code>nexo_inventario</code>. Fuente: <code>docs/diagrama_er.mmd</code>.</figcaption></figure>
 
+  
   <h3>2.4 Tablas (diccionario de datos)</h3>
   <p>Generado desde el catálogo de PostgreSQL (<code>pg_attribute</code>, <code>pg_constraint</code>).</p>
   <div class="diccionario">
@@ -655,6 +658,7 @@ agregado <span class="k">AS</span> (                  <span class="c">-- CTE 3: 
     <table class="tabla"><tr><th colspan="2">Proyecto en Neon</th></tr>
       <tr><th>Proyecto</th><td>nexo-inventario-u1</td></tr><tr><th>ID del proyecto</th><td>small-brook-55535774</td></tr><tr><th>Proveedor y región</th><td>AWS · us-east-2 (Ohio)</td></tr><tr><th>Versión</th><td>PostgreSQL 18</td></tr><tr><th>Rama</th><td>main (rama principal)</td></tr><tr><th>Base de datos</th><td>nexo_inventario</td></tr><tr><th>Propietario</th><td>nexo_inventario_owner</td></tr><tr><th>Conexión</th><td>Pooler de Neon con SSL obligatorio (sslmode=require); la app usa el driver HTTPS @neondatabase/serverless</td></tr><tr><th>Creado</th><td>2026-09-30 20:19 UTC</td></tr></table>
     
+    
       <div class="bloque">
         <h4>1.1 Conexión a la base de datos en la nube <span class="usuario">nexo_inventario_owner</span></h4>
         <pre class="sql" style="font-size:8.00pt"><span class="k">SELECT</span> current_database() <span class="k">AS</span> base_de_datos,
@@ -681,6 +685,7 @@ agregado <span class="k">AS</span> (                  <span class="c">-- CTE 3: 
   </div>
   <div class="evidencia">
     <h3 class="evidencia-titulo"><span>Evidencia 2</span> Diseño e implementación de las tablas</h3>
+    
     
     
       <div class="bloque">
@@ -819,6 +824,7 @@ agregado <span class="k">AS</span> (                  <span class="c">-- CTE 3: 
     <h3 class="evidencia-titulo"><span>Evidencia 3</span> Roles developer y &quot;user&quot;</h3>
     
     
+    
       <div class="bloque">
         <h4>3.1 Atributos de los roles <span class="usuario">nexo_inventario_owner</span></h4>
         <pre class="sql" style="font-size:8.00pt"><span class="k">SELECT</span> rolname <span class="k">AS</span> rol, rolcanlogin <span class="k">AS</span> <span class="k">login</span>, rolinherit <span class="k">AS</span> hereda,
@@ -914,6 +920,7 @@ agregado <span class="k">AS</span> (                  <span class="c">-- CTE 3: 
     <h3 class="evidencia-titulo"><span>Evidencia 4</span> Usuarios y asignación de roles</h3>
     
     
+    
       <div class="bloque">
         <h4>4.1 Usuarios creados y rol asignado <span class="usuario">nexo_inventario_owner</span></h4>
         <pre class="sql" style="font-size:8.00pt"><span class="k">SELECT</span> u.rolname <span class="k">AS</span> usuario, u.rolcanlogin <span class="k">AS</span> <span class="k">login</span>,
@@ -998,6 +1005,7 @@ SQLSTATE: 42501</pre><p class="esperado">✔ Error esperado: el permiso / la val
     <h3 class="evidencia-titulo"><span>Evidencia 5</span> Vistas con CTEs</h3>
     
     
+    
       <div class="bloque">
         <h4>5.1 Vistas creadas <span class="usuario">nexo_inventario_owner</span></h4>
         <pre class="sql" style="font-size:8.00pt"><span class="k">SELECT</span> viewname <span class="k">AS</span> vista, viewowner <span class="k">AS</span> propietario,
@@ -1054,6 +1062,7 @@ SQLSTATE: 42501</pre><p class="esperado">✔ Error esperado: el permiso / la val
   </div>
   <div class="evidencia">
     <h3 class="evidencia-titulo"><span>Evidencia 6</span> Funciones</h3>
+    
     
     
       <div class="bloque">
@@ -1176,6 +1185,7 @@ SQLSTATE: P0001</pre><p class="esperado">✔ Error esperado: el permiso / la val
   </div>
   <div class="evidencia">
     <h3 class="evidencia-titulo"><span>Evidencia 7</span> Uso de vistas y funciones</h3>
+    
     
     
       <div class="bloque">

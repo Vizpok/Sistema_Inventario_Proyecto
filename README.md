@@ -6,6 +6,8 @@ sistema web de inventario para **Distribuidora Nexo S.A. de C.V.** (empresa fict
 
 ![Dashboard](docs/capturas/02-dashboard.png)
 
+🐘 **Evidencias con DBeaver y la consola de Neon:** [`docs/GUIA_DBEAVER_NEON.md`](docs/GUIA_DBEAVER_NEON.md)
+
 📄 **Producto final (PDF):** [`docs/reporte/Reporte_Proyecto_U1.pdf`](docs/reporte/Reporte_Proyecto_U1.pdf) ·
 🧪 **Evidencias en texto:** [`docs/evidencias/EVIDENCIAS.md`](docs/evidencias/EVIDENCIAS.md)
 
@@ -88,10 +90,12 @@ npm start            # http://localhost:3000
 | `npm run sql -- archivo.sql …` | Ejecuta scripts SQL en Neon (cada archivo en una transacción) |
 | `npm run db:datos` | Regenera `database/05_datos_prueba.sql` (datos ficticios, ~500 movimientos vía la función) |
 | `npm run evidencias` | Ejecuta `06_evidencias.sql` iniciando sesión con cada usuario y guarda `docs/evidencias/` |
+| `npm run evidencias:dividir` | Divide las evidencias en `database/evidencias_manual/` (un archivo por conexión) para DBeaver / Neon |
 | `npm run reporte` | Genera `docs/reporte/Reporte_Proyecto_U1.html` y `.pdf` (usa Edge/Chrome instalado) |
 
 Para reiniciar los datos: `npm run sql -- database/00_reiniciar_datos.sql database/05_datos_prueba.sql`.
 
+Las capturas que guardes en `docs/capturas/manual/` (ver la guía de DBeaver/Neon) se insertan solas en el PDF.
 Los datos de la portada del PDF (alumno, matrícula, docente…) se editan en
 [`docs/reporte/datos.json`](docs/reporte/datos.json); después ejecuta `npm run reporte`.
 

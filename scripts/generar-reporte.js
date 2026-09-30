@@ -59,6 +59,27 @@ const img = (archivo, pie, clase = '') =>
   `<figure class="${clase}"><img src="${archivo}" alt="${esc(pie)}"><figcaption>${esc(pie)}</figcaption></figure>`;
 const cap = (n) => `../capturas/${n}.png`;
 
+// Capturas tomadas a mano en DBeaver / consola de Neon (docs/capturas/manual/)
+const DIR_MANUAL = path.join(RAIZ, 'docs', 'capturas', 'manual');
+const manuales = fs.existsSync(DIR_MANUAL)
+  ? fs.readdirSync(DIR_MANUAL).filter((f) => /\.(png|jpe?g)$/i.test(f)).sort()
+  : [];
+const pies = fs.existsSync(path.join(DIR_MANUAL, 'pies.json'))
+  ? JSON.parse(fs.readFileSync(path.join(DIR_MANUAL, 'pies.json'), 'utf8'))
+  : {};
+function pieManual(archivo) {
+  if (pies[archivo]) return pies[archivo];
+  const m = archivo.match(/^ev(\d+)-(\d+)-([a-z_]+?)(?:-([a-z0-9]+))?\.\w+$/i);
+  if (m) return `Evidencia ${m[1]} · paso ${m[2]}${m[4] ? ` (${m[4]})` : ''} ejecutado con la conexión ${m[3]} (DBeaver / Neon).`;
+  return archivo.replace(/\.\w+$/, '').replace(/[-_]/g, ' ');
+}
+function capturasManuales(filtro, titulo) {
+  const lista = manuales.filter(filtro);
+  if (!lista.length) return '';
+  return `<h4 class="manual-titulo">${titulo}</h4>` +
+    lista.map((f) => img(`../capturas/manual/${f}`, pieManual(f), 'manual')).join('');
+}
+
 // Oculta contraseñas del script de roles
 const sqlRoles = leer('database', '02_roles_usuarios.sql');
 const sqlVistas = leer('database', '03_vistas.sql');
@@ -192,6 +213,7 @@ const diseno = `
 
   <figure class="diagrama"><div class="rotado"><img src="../diagrama_er.svg" alt="Diagrama entidad-relación"></div><figcaption>Figura 1. Modelo entidad-relación de <code>nexo_inventario</code>. Fuente: <code>docs/diagrama_er.mmd</code>.</figcaption></figure>
 
+  ${capturasManuales((f) => f.startsWith('er-'), 'Diagrama generado por DBeaver a partir de la base de datos en Neon')}
   <h3>2.4 Tablas (diccionario de datos)</h3>
   <p>Generado desde el catálogo de PostgreSQL (<code>pg_attribute</code>, <code>pg_constraint</code>).</p>
   <div class="diccionario">${diccionarioHtml}</div>
@@ -270,6 +292,7 @@ const evidenciasHtml = `
   <div class="evidencia">
     <h3 class="evidencia-titulo"><span>Evidencia ${ev.numero}</span> ${esc(ev.titulo)}</h3>
     ${ev.numero === 1 ? extras[1] : ''}
+    ${capturasManuales((f) => f.startsWith(`ev${ev.numero}-`), 'Capturas en DBeaver y en la consola de Neon')}
     ${ev.secciones.map((sec, i) => `
       <div class="bloque">
         <h4>${ev.numero}.${i + 1} ${esc(sec.titulo)} <span class="usuario">${esc(sec.como === 'owner' ? 'nexo_inventario_owner' : sec.como)}</span></h4>
@@ -378,6 +401,8 @@ figure.alta img { max-height: 235mm; }
 figure.diagrama { break-before: page; break-after: page; margin: 0; }
 .rotado { position: relative; height: 238mm; overflow: visible; }
 .rotado img { position: absolute; width: 236mm; max-width: none; max-height: none; border: 0; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-90deg); }
+figure.manual img { max-height: 150mm; }
+.manual-titulo { color: #312e81; }
 figcaption { font-size: 8pt; color: #6b7280; margin-top: 4px; }
 .galeria { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 12px; }
 .galeria figure { margin: 4px 0; }
