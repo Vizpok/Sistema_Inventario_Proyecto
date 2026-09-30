@@ -13,6 +13,13 @@ ANTES de hacer cualquier cosa, dime en una lista numerada exactamente qué vas a
 (qué programas abrirás, qué archivos ejecutarás, qué capturas tomarás y con qué nombre) y
 espera a que yo te diga "adelante". Después ve informándome al terminar cada fase.
 
+IMPORTANTE: el proyecto YA ESTÁ TERMINADO y publicado en mi repositorio de GitHub. La base de
+datos ya existe en Neon con sus tablas, roles, usuarios, vistas, funciones y datos; la
+aplicación web, los scripts SQL, las evidencias en texto y el PDF ya están en el repositorio.
+NO crees ni recrees nada (ni proyectos, ni bases de datos, ni tablas, ni código): tu trabajo es
+sólo tomar las capturas en DBeaver y en la consola de Neon, completar la portada y regenerar el
+PDF. Si no sabes en qué carpeta de mi computadora está el repositorio, pregúntame antes de clonarlo.
+
 CONTEXTO
 - Repositorio: https://github.com/Vizpok/Sistema_Inventario_Proyecto
   (trabaja sobre la rama main; si todavía no se ha fusionado el pull request, usa la rama
