@@ -122,6 +122,31 @@ npm run sql -- database/00_reiniciar_datos.sql database/05_datos_prueba.sql
 
 ---
 
+## Demostración de funciones en DBeaver (Evidencia 6)
+
+Para mostrar las funciones en vivo, abre
+[`database/evidencias_manual/demo_funciones_dbeaver.sql`](../database/evidencias_manual/demo_funciones_dbeaver.sql)
+con la conexión **`Neon · usr_carlos`** y ejecuta paso a paso con **Ctrl+Enter**:
+
+| Paso | Qué muestra | Captura sugerida |
+|---|---|---|
+| 1 | Las 2 funciones: tipo (cálculo / inserción), parámetros, retorno y lenguaje | `ev6-dbeaver-1-funciones.png` |
+| 2 | El código fuente de cada una (`pg_get_functiondef`; doble clic en la celda para verlo completo) | `ev6-dbeaver-2-codigo.png` |
+| 3 | `fn_valor_inventario`: total, por almacén, por categoría y comprobación de que cuadra | `ev6-dbeaver-3-calculo.png` |
+| 4 | `fn_registrar_movimiento`: existencia antes → entrada de 25 → salida de 4 → kardex → existencia después | `ev6-dbeaver-4-insercion.png` |
+| 5 | Validaciones que **deben fallar** (sin existencia, sin proveedor, cantidad 0) | `ev6-dbeaver-5-validaciones.png` |
+| 6 | Las dos funciones juntas: el valor del inventario ya refleja los movimientos | `ev6-dbeaver-6-resultado.png` |
+
+**En el navegador de DBeaver** también se ven las funciones como objetos de la base:
+`Neon · usr_carlos → nexo_inventario → Esquemas → public → Funciones`. Doble clic en
+`fn_registrar_movimiento` → pestaña **Código fuente** (*Source*) muestra el PL/pgSQL, y la pestaña
+**Propiedades** los parámetros. Captura: `ev6-dbeaver-navegador.png`.
+
+Guarda las capturas en `docs/capturas/manual/`; las que empiezan con `ev6-` aparecen solas en la
+Evidencia 6 del PDF al ejecutar `npm run reporte`.
+
+---
+
 ## 4. Regenerar el PDF con tus capturas
 
 1. Guarda las imágenes (PNG o JPG) en `docs/capturas/manual/` con los nombres de las tablas.
