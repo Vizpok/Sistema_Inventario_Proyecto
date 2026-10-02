@@ -1,0 +1,64 @@
+<%- include('../partials/inicio') %>
+<div class="page-head">
+  <div>
+    <h1>Categorías</h1>
+    <p class="sub">El valor de cada categoría se calcula con <code>fn_valor_inventario(id_categoria)</code>.</p>
+  </div>
+</div>
+
+<% if (typeof error !== 'undefined' && error) { %><div class="alerta alerta-error"><%- icono('alerta') %><span><%= error %></span></div><% } %>
+
+<section class="grid <%= esAdmin ? 'grid-2-1' : '' %>">
+  <article class="card card-sin-padding">
+    <div class="tabla-scroll">
+      <table class="tabla">
+        <thead><tr><th>Categoría</th><th class="num">Productos</th><th class="num">Valor inventario</th><th>Estado</th><% if (esAdmin) { %><th></th><% } %></tr></thead>
+        <tbody>
+          <% categorias.forEach(c => { %>
+            <tr class="<%= c.activo ? '' : 'fila-inactiva' %>">
+              <td>
+                <div class="celda-producto">
+                  <a href="/catalogo?categoria=<%= c.id_categoria %>"><span class="punto" style="background: <%= c.color %>"></span><%= c.nombre %></a>
+                  <span class="muted"><%= c.descripcion || '' %></span>
+                </div>
+              </td>
+              <td class="num"><%= c.productos %></td>
+              <td class="num"><strong><%= moneda(c.valor) %></strong></td>
+              <td><span class="badge <%= c.activo ? 'badge-verde' : 'badge-gris' %>"><%= c.activo ? 'Activa' : 'Inactiva' %></span></td>
+              <% if (esAdmin) { %>
+                <td>
+                  <div class="acciones-fila">
+                    <a class="btn btn-fantasma btn-sm" href="/categorias/<%= c.id_categoria %>/editar" title="Editar"><%- icono('editar') %></a>
+                    <form method="post" action="/categorias/<%= c.id_categoria %>/estado" class="en-linea">
+                      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                      <button class="btn btn-fantasma btn-sm" title="<%= c.activo ? 'Desactivar' : 'Activar' %>"><%- icono('power') %></button>
+                    </form>
+                    <form method="post" action="/categorias/<%= c.id_categoria %>/eliminar" class="en-linea" data-confirmar="¿Eliminar la categoría “<%= c.nombre %>”?">
+                      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                      <button class="btn btn-fantasma btn-sm" title="Eliminar" style="color: var(--rojo)"><%- icono('borrar') %></button>
+                    </form>
+                  </div>
+                </td>
+              <% } %>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  </article>
+
+  <% if (esAdmin) { %>
+    <article class="card">
+      <header class="card-head"><div><h2>Nueva categoría</h2><p class="sub">El nombre debe ser único.</p></div></header>
+      <form method="post" action="/categorias" class="form">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <label class="campo"><span>Nombre *</span><input type="text" name="nombre" value="<%= nueva.nombre || '' %>" required maxlength="60"></label>
+        <label class="campo"><span>Descripción</span><textarea name="descripcion" maxlength="255"><%= nueva.descripcion || '' %></textarea></label>
+        <label class="campo"><span>Color de etiqueta</span><input type="color" name="color" value="<%= nueva.color %>"></label>
+        <div class="ayuda"><%- icono('escudo') %><span>Si una categoría tiene productos, la llave foránea <code>fk_productos_categoria</code> (ON DELETE RESTRICT) impide eliminarla.</span></div>
+        <button class="btn btn-primario"><%- icono('mas') %> Crear categoría</button>
+      </form>
+    </article>
+  <% } %>
+</section>
+<%- include('../partials/fin') %>

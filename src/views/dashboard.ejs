@@ -1,0 +1,169 @@
+<%- include('partials/inicio') %>
+<%
+  const horaMx = Number(new Intl.DateTimeFormat('es-MX', { timeZone: ZONA, hour: 'numeric', hour12: false }).format(new Date()));
+  const saludo = horaMx < 12 ? 'Buenos días' : horaMx < 19 ? 'Buenas tardes' : 'Buenas noches';
+  const maxAlm = Math.max(1, ...porAlmacen.map(a => Number(a.valor)));
+%>
+<div class="page-head">
+  <div>
+    <p class="eyebrow"><%= fecha(new Date()) %></p>
+    <h1><%= saludo %>, <%= usuario.nombre %></h1>
+    <p class="sub">Resumen del inventario de Distribuidora Nexo en todos los almacenes.</p>
+  </div>
+  <div class="acciones">
+    <a href="/inventario/exportar.csv" class="btn btn-secundario"><%- icono('descargar') %> Exportar inventario</a>
+  </div>
+</div>
+
+<section class="kpis">
+  <article class="kpi">
+    <div class="kpi-ico ico-indigo"><%- icono('dinero') %></div>
+    <div>
+      <p class="kpi-etiqueta">Valor del inventario</p>
+      <p class="kpi-valor"><%= moneda(kpi.valor_total) %></p>
+      <p class="kpi-nota"><code>fn_valor_inventario()</code></p>
+    </div>
+  </article>
+  <article class="kpi">
+    <div class="kpi-ico ico-azul"><%- icono('inventario') %></div>
+    <div>
+      <p class="kpi-etiqueta">Productos activos</p>
+      <p class="kpi-valor"><%= numero(kpi.productos) %></p>
+      <p class="kpi-nota"><%= numero(kpi.unidades) %> unidades en existencia</p>
+    </div>
+  </article>
+  <a class="kpi kpi-enlace" href="/inventario?estado=BAJO">
+    <div class="kpi-ico ico-ambar"><%- icono('alerta') %></div>
+    <div>
+      <p class="kpi-etiqueta">Alertas de stock</p>
+      <p class="kpi-valor"><%= numero(kpi.alertas) %></p>
+      <p class="kpi-nota"><%= numero(kpi.agotados) %> sin existencia · <%= numero(kpi.alertas - kpi.agotados) %> en nivel bajo</p>
+    </div>
+  </a>
+  <article class="kpi">
+    <div class="kpi-ico ico-verde"><%- icono('movimientos') %></div>
+    <div>
+      <p class="kpi-etiqueta">Movimientos hoy</p>
+      <p class="kpi-valor"><%= numero(hoy.movimientos) %></p>
+      <p class="kpi-nota">7 días: <span class="txt-entrada">+<%= numero(semana.entradas) %></span> / <span class="txt-salida">−<%= numero(semana.salidas) %></span> uds.</p>
+    </div>
+  </article>
+</section>
+
+<section class="grid grid-2-1">
+  <article class="card">
+    <header class="card-head">
+      <div>
+        <h2>Entradas y salidas · últimos 30 días</h2>
+        <p class="sub">Unidades por día · vista <code>vw_movimientos_diarios</code></p>
+      </div>
+    </header>
+    <div class="grafica grafica-alta"><canvas id="graficaMovimientos" role="img" aria-label="Gráfica de líneas de unidades de entrada y salida por día en los últimos 30 días"></canvas></div>
+    <details class="tabla-alterna">
+      <summary>Ver como tabla</summary>
+      <div class="tabla-scroll"><table class="tabla tabla-compacta">
+        <thead><tr><th>Día</th><th class="num">Entradas</th><th class="num">Salidas</th><th class="num">Movs.</th></tr></thead>
+        <tbody><% serie.slice().reverse().forEach(d => { %><tr><td><%= fecha(d.dia + 'T12:00:00') %></td><td class="num"><%= numero(d.unidades_entrada) %></td><td class="num"><%= numero(d.unidades_salida) %></td><td class="num"><%= d.movimientos %></td></tr><% }) %></tbody>
+      </table></div>
+    </details>
+  </article>
+  <article class="card">
+    <header class="card-head">
+      <div>
+        <h2>Valor por categoría</h2>
+        <p class="sub">Existencia × precio de compra</p>
+      </div>
+    </header>
+    <div class="grafica grafica-alta"><canvas id="graficaCategorias" role="img" aria-label="Gráfica de barras del valor del inventario por categoría"></canvas></div>
+  </article>
+</section>
+
+<section class="grid grid-3">
+  <article class="card">
+    <header class="card-head">
+      <div><h2>Alertas de reabastecimiento</h2><p class="sub">Productos en nivel bajo o agotados</p></div>
+      <a href="/inventario?estado=BAJO" class="enlace">Ver todo</a>
+    </header>
+    <% if (!alertas.length) { %>
+      <p class="vacio">Sin alertas: todo el inventario está sobre el mínimo.</p>
+    <% } else { %>
+      <ul class="lista">
+        <% alertas.forEach(a => { %>
+          <li>
+            <a href="/catalogo/<%= a.id_producto %>" class="lista-principal">
+              <strong><%= a.nombre %></strong>
+              <span class="muted"><%= a.sku %> · mín. <%= a.stock_minimo %></span>
+            </a>
+            <div class="lista-lado">
+              <span class="badge badge-<%= claseEstado(a.estado) %>"><%= a.estado === 'SIN STOCK' ? 'Agotado' : 'Bajo' %></span>
+              <strong class="num"><%= numero(a.existencia_total) %></strong>
+            </div>
+          </li>
+        <% }) %>
+      </ul>
+    <% } %>
+  </article>
+
+  <article class="card">
+    <header class="card-head">
+      <div><h2>Valor por almacén</h2><p class="sub"><code>fn_valor_inventario(NULL, id_almacen)</code></p></div>
+    </header>
+    <ul class="medidores">
+      <% porAlmacen.forEach(a => { %>
+        <li>
+          <div class="medidor-texto"><span><%= a.nombre %></span><strong><%= moneda(a.valor) %></strong></div>
+          <div class="medidor" role="meter" aria-valuemin="0" aria-valuemax="<%= maxAlm %>" aria-valuenow="<%= a.valor %>" aria-label="<%= a.nombre %>"><span style="width: <%= (Number(a.valor) / maxAlm * 100).toFixed(1) %>%"></span></div>
+          <p class="muted"><%= numero(a.unidades) %> unidades</p>
+        </li>
+      <% }) %>
+    </ul>
+  </article>
+
+  <article class="card">
+    <header class="card-head">
+      <div><h2>Más vendidos</h2><p class="sub">Unidades con salida en 30 días</p></div>
+    </header>
+    <ol class="ranking">
+      <% top.forEach((t, i) => { %>
+        <li>
+          <span class="ranking-pos"><%= i + 1 %></span>
+          <a href="/catalogo/<%= t.id_producto %>" class="lista-principal">
+            <strong><%= t.nombre %></strong>
+            <span class="muted"><%= t.categoria %> · existencia <%= numero(t.existencia_total) %></span>
+          </a>
+          <strong class="num"><%= numero(t.salidas_30d) %></strong>
+        </li>
+      <% }) %>
+    </ol>
+  </article>
+</section>
+
+<article class="card">
+  <header class="card-head">
+    <div><h2>Últimos movimientos</h2><p class="sub">Registrados con <code>fn_registrar_movimiento()</code></p></div>
+    <a href="/movimientos" class="enlace">Ver kardex completo</a>
+  </header>
+  <div class="tabla-scroll">
+    <table class="tabla">
+      <thead><tr><th>Folio</th><th>Fecha</th><th>Tipo</th><th>Producto</th><th>Almacén</th><th class="num">Cantidad</th><th>Usuario</th></tr></thead>
+      <tbody>
+        <% recientes.forEach(m => { %>
+          <tr>
+            <td><a href="/movimientos/<%= m.id_movimiento %>" class="mono"><%= m.folio %></a></td>
+            <td class="muted" title="<%= fechaHora(m.fecha) %>"><%= relativo(m.fecha) %></td>
+            <td><span class="tipo tipo-<%= m.naturaleza.toLowerCase() %>"><%- icono(m.naturaleza === 'ENTRADA' ? 'entrada' : 'salida') %><%= m.tipo %></span></td>
+            <td><%= m.producto %></td>
+            <td><%= m.almacen %></td>
+            <td class="num <%= m.naturaleza === 'ENTRADA' ? 'txt-entrada' : 'txt-salida' %>"><%= m.naturaleza === 'ENTRADA' ? '+' : '−' %><%= numero(m.cantidad) %></td>
+            <td><%= m.usuario %></td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+</article>
+
+<script type="application/json" id="datos-dashboard"><%- JSON.stringify({ serie, porCategoria }).replace(/</g, '\\u003c') %></script>
+<script src="/vendor/chart.js/chart.umd.min.js"></script>
+<script src="/js/dashboard.js"></script>
+<%- include('partials/fin') %>

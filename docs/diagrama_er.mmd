@@ -1,0 +1,112 @@
+erDiagram
+    CATEGORIAS ||--o{ PRODUCTOS : "clasifica"
+    PRODUCTOS ||--o{ PRODUCTO_PROVEEDOR : "se surte de"
+    PROVEEDORES ||--o{ PRODUCTO_PROVEEDOR : "surte"
+    PRODUCTOS ||--o{ INVENTARIO : "tiene existencia en"
+    ALMACENES ||--o{ INVENTARIO : "guarda"
+    USUARIOS |o--o{ ALMACENES : "es responsable de"
+    TIPOS_MOVIMIENTO ||--o{ MOVIMIENTOS : "clasifica"
+    PRODUCTOS ||--o{ MOVIMIENTOS : "se mueve en"
+    ALMACENES ||--o{ MOVIMIENTOS : "ocurre en"
+    PROVEEDORES |o--o{ MOVIMIENTOS : "participa en"
+    USUARIOS ||--o{ MOVIMIENTOS : "registra"
+    USUARIOS |o--o{ BITACORA : "genera"
+
+    USUARIOS {
+        integer id_usuario PK
+        varchar nombre
+        varchar apellidos
+        varchar correo UK
+        varchar password_hash
+        varchar rol "admin | usuario"
+        varchar puesto
+        boolean activo
+        timestamptz ultimo_acceso
+        timestamptz creado_en
+    }
+    CATEGORIAS {
+        smallint id_categoria PK
+        varchar nombre UK
+        varchar descripcion
+        char color
+        boolean activo
+        timestamptz creado_en
+    }
+    PROVEEDORES {
+        integer id_proveedor PK
+        varchar razon_social
+        varchar rfc UK
+        varchar contacto
+        varchar telefono
+        varchar correo
+        varchar ciudad
+        varchar direccion
+        boolean activo
+        timestamptz creado_en
+    }
+    ALMACENES {
+        smallint id_almacen PK
+        varchar nombre UK
+        varchar ubicacion
+        integer id_responsable FK
+        boolean activo
+    }
+    TIPOS_MOVIMIENTO {
+        smallint id_tipo PK
+        varchar nombre UK
+        varchar naturaleza "ENTRADA | SALIDA"
+        boolean requiere_proveedor
+        varchar descripcion
+    }
+    PRODUCTOS {
+        integer id_producto PK
+        varchar sku UK
+        varchar nombre
+        text descripcion
+        smallint id_categoria FK
+        varchar unidad
+        numeric precio_compra
+        numeric precio_venta
+        integer stock_minimo
+        integer stock_maximo
+        boolean activo
+        timestamptz creado_en
+        timestamptz actualizado_en
+    }
+    PRODUCTO_PROVEEDOR {
+        integer id_producto PK,FK
+        integer id_proveedor PK,FK
+        numeric costo
+        smallint dias_entrega
+        boolean es_principal
+    }
+    INVENTARIO {
+        integer id_producto PK,FK
+        smallint id_almacen PK,FK
+        integer existencia
+        varchar ubicacion
+        timestamptz actualizado_en
+    }
+    MOVIMIENTOS {
+        integer id_movimiento PK
+        varchar folio UK "generada"
+        smallint id_tipo FK
+        integer id_producto FK
+        smallint id_almacen FK
+        integer id_proveedor FK
+        integer id_usuario FK
+        integer cantidad
+        numeric costo_unitario
+        integer existencia_resultante
+        varchar referencia
+        varchar observaciones
+        timestamptz fecha
+    }
+    BITACORA {
+        bigint id_bitacora PK
+        integer id_usuario FK
+        varchar accion
+        varchar modulo
+        varchar descripcion
+        timestamptz fecha
+    }

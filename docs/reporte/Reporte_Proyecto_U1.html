@@ -1,0 +1,1339 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Proyecto U1 · Base de datos en la nube (Neon + PostgreSQL) · Sistema de inventario Nexo</title>
+<style>
+@page { size: A4; margin: 18mm 16mm 18mm 16mm; }
+* { box-sizing: border-box; }
+html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+body { font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif; font-size: 10pt; line-height: 1.5; color: #1f2937; margin: 0; }
+h1, h2, h3, h4 { color: #111827; line-height: 1.25; break-after: avoid; }
+h2 { font-size: 17pt; border-bottom: 2px solid #4f46e5; padding-bottom: 4px; margin: 0 0 12px; }
+h3 { font-size: 12.5pt; margin: 18px 0 8px; color: #312e81; }
+h4 { font-size: 10pt; margin: 14px 0 6px; }
+section { break-before: page; }
+p { margin: 0 0 8px; text-align: justify; }
+ul { margin: 0 0 10px; padding-left: 18px; }
+li { margin-bottom: 3px; }
+code, .mono { font-family: "Cascadia Code", Consolas, "DejaVu Sans Mono", monospace; font-size: 8.5pt; }
+p code, li code, td code { background: #eef2ff; color: #3730a3; padding: 0 3px; border-radius: 3px; }
+.tabla { width: 100%; border-collapse: collapse; margin: 6px 0 12px; font-size: 8.8pt; }
+.tabla th, .tabla td { border: 1px solid #d1d5db; padding: 4px 6px; text-align: left; vertical-align: top; }
+.tabla th { background: #f3f4f6; font-weight: 600; }
+.tabla-mini { font-size: 7.6pt; margin: 0; }
+.tabla-mini td, .tabla-mini th { padding: 2px 5px; }
+.matriz td:nth-child(n+2) { text-align: center; font-weight: 700; }
+pre { margin: 0 0 6px; padding: 8px 10px; border-radius: 6px; white-space: pre-wrap; word-break: break-word; line-height: 1.35; }
+pre.sql { background: #f8fafc; border: 1px solid #e2e8f0; color: #0f172a; }
+pre.sql .k { color: #4338ca; font-weight: 700; }
+pre.sql .s { color: #047857; }
+pre.sql .c { color: #6b7280; font-style: italic; }
+pre.consola { background: #0f172a; color: #e2e8f0; white-space: pre; overflow: hidden; margin-bottom: 10px; }
+pre.consola.ajustar { white-space: pre-wrap; word-break: break-all; }
+pre.consola.esperado { background: #3b0d0d; color: #fecaca; }
+pre.consola.fallo { background: #7f1d1d; color: #fff; }
+p.esperado, span.esperado { color: #b91c1c; font-weight: 600; font-size: 8.5pt; margin-top: -4px; }
+span.esperado { background: #fee2e2; padding: 0 4px; border-radius: 3px; }
+figure { margin: 10px 0 14px; break-inside: avoid; text-align: center; }
+figure img { max-width: 100%; max-height: 118mm; border: 1px solid #d1d5db; border-radius: 6px; }
+figure.alta img { max-height: 235mm; }
+figure.diagrama { break-before: page; break-after: page; margin: 0; }
+.rotado { position: relative; height: 238mm; overflow: visible; }
+.rotado img { position: absolute; width: 236mm; max-width: none; max-height: none; border: 0; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-90deg); }
+figure.manual img { max-height: 150mm; }
+.manual-titulo { color: #312e81; }
+figcaption { font-size: 8pt; color: #6b7280; margin-top: 4px; }
+.galeria { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 12px; }
+.galeria figure { margin: 4px 0; }
+.galeria img { max-height: 60mm; }
+.nota { font-size: 8.5pt; color: #4b5563; background: #f9fafb; border-left: 3px solid #4f46e5; padding: 8px 10px; margin-top: 18px; }
+.portada { break-before: auto; height: 255mm; display: flex; flex-direction: column; justify-content: center; position: relative; padding: 0 6mm; }
+.portada-banda { position: absolute; top: 0; left: -16mm; right: -16mm; height: 14mm; background: linear-gradient(90deg, #4f46e5, #0ea5e9); }
+.portada-inst { font-size: 12pt; font-weight: 600; color: #374151; margin-bottom: 26px; text-align: left; }
+.portada-materia { color: #4f46e5; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; font-size: 10pt; }
+.portada h1 { font-size: 25pt; margin: 6px 0 10px; }
+.portada-sub { font-size: 13pt; color: #4b5563; text-align: left; }
+.portada-logo { width: 26mm; margin: 22px 0; }
+.portada-datos { border-collapse: collapse; width: 100%; max-width: 150mm; font-size: 10.5pt; }
+.portada-datos th { text-align: left; width: 42mm; padding: 5px 0; color: #6b7280; font-weight: 600; }
+.portada-datos td { padding: 5px 0; }
+.linea { display: inline-block; width: 90mm; border-bottom: 1px solid #9ca3af; height: 1em; }
+.indice ol { font-size: 12pt; line-height: 2; }
+.arquitectura { display: flex; align-items: center; gap: 6px; margin: 10px 0 12px; }
+.arquitectura .caja { flex: 1; border: 1.5px solid #4f46e5; border-radius: 8px; padding: 8px; text-align: center; background: #eef2ff; font-size: 8.5pt; }
+.arquitectura .caja strong { display: block; font-size: 9.5pt; }
+.arquitectura .caja-bd { border-color: #059669; background: #ecfdf5; }
+.arquitectura .flecha { font-size: 7.5pt; color: #4b5563; text-align: center; }
+.diccionario { }
+.tabla-dic { break-inside: avoid; margin-bottom: 10px; }
+.tabla-dic h4 { margin: 0 0 3px; font-family: Consolas, monospace; font-size: 9pt; color: #312e81; }
+.tabla-dic h4 span { font-family: "Segoe UI", Arial, sans-serif; font-weight: 400; color: #6b7280; font-size: 7.5pt; }
+.evidencia { break-before: page; }
+.evidencia:first-of-type { break-before: auto; }
+.evidencia-titulo { font-size: 14pt; color: #111827; background: #eef2ff; border-left: 5px solid #4f46e5; padding: 6px 10px; margin-top: 0; }
+.evidencia-titulo span { color: #4f46e5; }
+.bloque h4 { display: flex; justify-content: space-between; gap: 10px; border-bottom: 1px solid #e5e7eb; padding-bottom: 3px; }
+.usuario { font-family: Consolas, monospace; font-size: 7.5pt; font-weight: 600; background: #111827; color: #a5b4fc; padding: 1px 6px; border-radius: 3px; white-space: nowrap; }
+.pregunta { font-size: 11pt; font-weight: 600; font-style: italic; color: #312e81; background: #eef2ff; padding: 8px 12px; border-radius: 6px; }
+</style>
+</head>
+<body>
+
+<section class="portada">
+  <div class="portada-banda"></div>
+  <p class="portada-inst"></p>
+  <p class="portada-materia">Bases de Datos Relacionales · Unidad 1</p>
+  <h1>Implementación completa de una base de datos en la nube (Neon + PostgreSQL)</h1>
+  <p class="portada-sub">Sistema de inventario para Distribuidora Nexo S.A. de C.V. (empresa ficticia)</p>
+  <img class="portada-logo" src="../../public/img/logo.svg" alt="">
+  <table class="portada-datos">
+    <tr><th>Alumno(a)</th><td><span class="linea"></span></td></tr>
+    <tr><th>Matrícula</th><td><span class="linea"></span></td></tr>
+    <tr><th>Grupo</th><td><span class="linea"></span></td></tr>
+    <tr><th>Docente</th><td><span class="linea"></span></td></tr>
+    <tr><th>Fecha de entrega</th><td>30 de septiembre de 2026</td></tr>
+    <tr><th>Repositorio</th><td>https://github.com/Vizpok/Sistema_Inventario_Proyecto</td></tr>
+  </table>
+</section>
+
+<section class="indice">
+  <h2 class="sin-numero">Contenido</h2>
+  <ol>
+    <li>Introducción</li>
+    <li>Diseño de la base de datos (diagrama y tablas)</li>
+    <li>Scripts de roles y usuarios</li>
+    <li>Scripts de vistas y funciones</li>
+    <li>Evidencias 1–7</li>
+    <li>Aplicación web: uso de las vistas y funciones</li>
+    <li>Reflexión final</li>
+  </ol>
+  <p class="nota">Todas las salidas de consola de este documento son resultados reales obtenidos al ejecutar
+  <code>database/06_evidencias.sql</code> contra Neon el 2026-09-30 (hora UTC 20:55),
+  iniciando sesión con el usuario indicado en cada bloque. Las capturas son de la aplicación conectada a la misma base de datos.</p>
+</section>
+
+<section>
+  <h2>1. Introducción</h2>
+  <p><strong>Distribuidora Nexo S.A. de C.V.</strong> es una empresa ficticia de Monterrey, N.L., que comercializa equipo de cómputo,
+  periféricos, redes, consumibles de impresión, papelería, mobiliario de oficina y equipo de energía. Opera un almacén central
+  y dos sucursales (Saltillo y Guadalajara). Hasta ahora controlaba sus existencias en hojas de cálculo, lo que provocaba
+  diferencias entre lo registrado y lo físico, ventas de productos agotados y nula trazabilidad de quién movía la mercancía.</p>
+  <p>El objetivo de este proyecto es <strong>diseñar, implementar y explotar una base de datos relacional en la nube</strong>
+  con <strong>Neon (PostgreSQL 18 serverless)</strong> que sirva como núcleo de un sistema de inventario, cumpliendo con:</p>
+  <ul>
+    <li>Un diseño normalizado con <strong>10 tablas</strong> relacionadas (1:N y N:M), llaves primarias, foráneas, restricciones y tipos de datos adecuados.</li>
+    <li>Dos roles con permisos diferenciados, <code>developer</code> y <code>"user"</code>, incluyendo permisos por defecto para tablas futuras, y cuatro usuarios asignados a ellos.</li>
+    <li>Dos vistas construidas con <strong>CTEs</strong> y dos funciones: una de <strong>cálculo</strong> y una de <strong>inserción</strong>.</li>
+    <li>El uso real de esas vistas y funciones, tanto desde SQL como desde una <strong>aplicación web</strong> (Node.js + Express) con dashboard, inventario, catálogo, proveedores, categorías, registro de movimientos, sección de administración y sección de usuario.</li>
+  </ul>
+  <h3>Arquitectura</h3>
+  <div class="arquitectura">
+    <div class="caja"><strong>Navegador</strong><span>Administradores y usuarios de Nexo</span></div>
+    <div class="flecha">HTTPS →</div>
+    <div class="caja"><strong>Aplicación web</strong><span>Node.js · Express · EJS<br>sesión + rol de aplicación (admin / usuario)</span></div>
+    <div class="flecha">SQL sobre HTTPS →<br><code>app_nexo</code> (rol "user")</div>
+    <div class="caja caja-bd"><strong>Neon · PostgreSQL 18</strong><span>BD <code>nexo_inventario</code><br>tablas · vistas CTE · funciones</span></div>
+  </div>
+  <p>La aplicación <strong>no</strong> se conecta con el propietario de la base de datos, sino con <code>app_nexo</code>, miembro del rol
+  <code>"user"</code>: puede leer y escribir datos, pero cualquier intento de crear o borrar objetos es rechazado por PostgreSQL.
+  Los desarrolladores (<code>dev_ana</code>, <code>dev_luis</code>) usan el rol <code>developer</code> para evolucionar el esquema.
+  Toda la lógica crítica (validar existencias y actualizar el inventario) vive en la base de datos, dentro de
+  <code>fn_registrar_movimiento</code>, por lo que se cumple sin importar qué cliente la invoque.</p>
+  <h3>Tecnologías</h3>
+  <table class="tabla">
+    <tr><th>Componente</th><th>Tecnología</th></tr>
+    <tr><td>Base de datos</td><td>Neon serverless PostgreSQL 18 (AWS · us-east-2 (Ohio))</td></tr>
+    <tr><td>Lenguajes de BD</td><td>SQL (DDL, DCL, DML), PL/pgSQL, CTEs</td></tr>
+    <tr><td>Aplicación</td><td>Node.js ≥ 18, Express 5, EJS, bcryptjs, Chart.js</td></tr>
+    <tr><td>Conexión</td><td>Driver oficial <code>@neondatabase/serverless</code> (consultas SQL sobre HTTPS, sin puerto 5432)</td></tr>
+    <tr><td>Control de versiones</td><td>Git / GitHub — todos los scripts SQL están versionados en <code>database/</code></td></tr>
+  </table>
+</section>
+
+<section>
+  <h2>2. Diseño de la base de datos</h2>
+  <h3>2.1 Diagrama entidad-relación</h3>
+  <p>La figura 1 (página completa, en horizontal, después de la sección 2.3) muestra las 10 entidades, sus atributos con tipo de dato y las llaves
+  (PK = primaria, FK = foránea, UK = única). Las líneas usan notación <em>pata de gallo</em>: <code>||</code> exactamente uno,
+  <code>o|</code> cero o uno y <code>o{</code> cero o muchos.</p>
+
+  <h3>2.2 Relaciones</h3>
+  <table class="tabla">
+    <tr><th>Relación</th><th>Tipo</th><th>Implementación</th><th>Regla al borrar</th></tr>
+    <tr><td>categorias → productos</td><td>1:N</td><td><code>productos.id_categoria</code></td><td>RESTRICT</td></tr>
+    <tr><td>productos ↔ proveedores</td><td><strong>N:M</strong></td><td>tabla puente <code>producto_proveedor</code> (PK compuesta) con costo, días de entrega y proveedor principal</td><td>CASCADE</td></tr>
+    <tr><td>productos ↔ almacenes</td><td><strong>N:M</strong></td><td>tabla <code>inventario</code> (PK compuesta) con la existencia y la ubicación física</td><td>RESTRICT</td></tr>
+    <tr><td>usuarios → almacenes</td><td>1:N (opcional)</td><td><code>almacenes.id_responsable</code></td><td>SET NULL</td></tr>
+    <tr><td>tipos_movimiento → movimientos</td><td>1:N</td><td><code>movimientos.id_tipo</code></td><td>NO ACTION</td></tr>
+    <tr><td>productos / almacenes → movimientos</td><td>1:N</td><td><code>movimientos.id_producto</code>, <code>id_almacen</code></td><td>NO ACTION</td></tr>
+    <tr><td>proveedores → movimientos</td><td>1:N (opcional)</td><td><code>movimientos.id_proveedor</code> (sólo compras/devoluciones)</td><td>NO ACTION</td></tr>
+    <tr><td>usuarios → movimientos / bitácora</td><td>1:N</td><td><code>movimientos.id_usuario</code>, <code>bitacora.id_usuario</code></td><td>NO ACTION / SET NULL</td></tr>
+  </table>
+
+  <h3>2.3 Decisiones de diseño</h3>
+  <ul>
+    <li><strong>Normalización (3FN):</strong> cada hecho se guarda una sola vez. Categorías, proveedores, almacenes y tipos de movimiento son catálogos independientes; la existencia se guarda por producto y almacén en <code>inventario</code> y no en <code>productos</code>, porque depende de ambos.</li>
+    <li><strong>Llaves primarias</strong> con <code>GENERATED ALWAYS AS IDENTITY</code> (estándar SQL) y llaves compuestas en las tablas puente.</li>
+    <li><strong>Tipos de datos:</strong> <code>NUMERIC(12,2)</code> para dinero (sin errores de redondeo de <code>float</code>), <code>TIMESTAMPTZ</code> para fechas (Neon corre en UTC y la app muestra hora de Ciudad de México), <code>SMALLINT</code> en catálogos pequeños, <code>VARCHAR(n)</code> con longitudes realistas y <code>TEXT</code> para descripciones.</li>
+    <li><strong>Integridad:</strong> restricciones <code>CHECK</code> (precios ≥ 0, existencia ≥ 0, cantidad &gt; 0, RFC de 12 o 13 caracteres, color hexadecimal, rango mínimo/máximo), <code>UNIQUE</code> (SKU, correo, RFC, nombres) y un <strong>índice único parcial</strong> que garantiza un solo proveedor principal por producto.</li>
+    <li><strong>Columna generada</strong> <code>movimientos.folio</code> (<code>'MOV-' || lpad(id, 6, '0')</code>): siempre consistente con el id.</li>
+    <li><code>movimientos.existencia_resultante</code> guarda una <em>foto</em> de la existencia al momento del movimiento (kardex histórico); no es redundancia porque ese valor no puede recalcularse de forma barata ni cambia después.</li>
+    <li><strong>Índices</strong> sobre las llaves foráneas y sobre <code>movimientos(fecha)</code> para acelerar el kardex y las vistas.</li>
+  </ul>
+
+  <figure class="diagrama"><div class="rotado"><img src="../diagrama_er.svg" alt="Diagrama entidad-relación"></div><figcaption>Figura 1. Modelo entidad-relación de <code>nexo_inventario</code>. Fuente: <code>docs/diagrama_er.mmd</code>.</figcaption></figure>
+
+  
+  <h3>2.4 Tablas (diccionario de datos)</h3>
+  <p>Generado desde el catálogo de PostgreSQL (<code>pg_attribute</code>, <code>pg_constraint</code>).</p>
+  <div class="diccionario">
+  <div class="tabla-dic">
+    <h4>usuarios <span>Usuarios del sistema web (rol de aplicación admin/usuario)</span></h4>
+    <table class="tabla tabla-mini">
+      <tr><th>Columna</th><th>Tipo</th><th>Nulo</th><th>Llaves</th><th>Por defecto</th></tr>
+      <tr><td class="mono">id_usuario</td><td class="mono">integer</td><td>NO</td><td>PK</td><td class="mono">IDENTITY</td></tr><tr><td class="mono">nombre</td><td class="mono">varchar(80)</td><td>NO</td><td></td><td class="mono"></td></tr><tr><td class="mono">apellidos</td><td class="mono">varchar(100)</td><td>NO</td><td></td><td class="mono"></td></tr><tr><td class="mono">correo</td><td class="mono">varchar(120)</td><td>NO</td><td>UK</td><td class="mono"></td></tr><tr><td class="mono">password_hash</td><td class="mono">varchar(100)</td><td>NO</td><td></td><td class="mono"></td></tr><tr><td class="mono">rol</td><td class="mono">varchar(10)</td><td>NO</td><td></td><td class="mono">'usuario'</td></tr><tr><td class="mono">puesto</td><td class="mono">varchar(80)</td><td>sí</td><td></td><td class="mono"></td></tr><tr><td class="mono">activo</td><td class="mono">boolean</td><td>NO</td><td></td><td class="mono">true</td></tr><tr><td class="mono">ultimo_acceso</td><td class="mono">timestamptz</td><td>sí</td><td></td><td class="mono"></td></tr><tr><td class="mono">creado_en</td><td class="mono">timestamptz</td><td>NO</td><td></td><td class="mono">now()</td></tr>
+    </table>
+  </div>
+  <div class="tabla-dic">
+    <h4>categorias <span>Categorías del catálogo de productos</span></h4>
+    <table class="tabla tabla-mini">
+      <tr><th>Columna</th><th>Tipo</th><th>Nulo</th><th>Llaves</th><th>Por defecto</th></tr>
+      <tr><td class="mono">id_categoria</td><td class="mono">smallint</td><td>NO</td><td>PK</td><td class="mono">IDENTITY</td></tr><tr><td class="mono">nombre</td><td class="mono">varchar(60)</td><td>NO</td><td>UK</td><td class="mono"></td></tr><tr><td class="mono">descripcion</td><td class="mono">varchar(255)</td><td>sí</td><td></td><td class="mono"></td></tr><tr><td class="mono">color</td><td class="mono">char(7)</td><td>NO</td><td></td><td class="mono">'#4F46E5'</td></tr><tr><td class="mono">activo</td><td class="mono">boolean</td><td>NO</td><td></td><td class="mono">true</td></tr><tr><td class="mono">creado_en</td><td class="mono">timestamptz</td><td>NO</td><td></td><td class="mono">now()</td></tr>
+    </table>
+  </div>
+  <div class="tabla-dic">
+    <h4>proveedores <span>Proveedores de mercancía</span></h4>
+    <table class="tabla tabla-mini">
+      <tr><th>Columna</th><th>Tipo</th><th>Nulo</th><th>Llaves</th><th>Por defecto</th></tr>
+      <tr><td class="mono">id_proveedor</td><td class="mono">integer</td><td>NO</td><td>PK</td><td class="mono">IDENTITY</td></tr><tr><td class="mono">razon_social</td><td class="mono">varchar(150)</td><td>NO</td><td></td><td class="mono"></td></tr><tr><td class="mono">rfc</td><td class="mono">varchar(13)</td><td>NO</td><td>UK</td><td class="mono"></td></tr><tr><td class="mono">contacto</td><td class="mono">varchar(100)</td><td>sí</td><td></td><td class="mono"></td></tr><tr><td class="mono">telefono</td><td class="mono">varchar(20)</td><td>sí</td><td></td><td class="mono"></td></tr><tr><td class="mono">correo</td><td class="mono">varchar(120)</td><td>sí</td><td></td><td class="mono"></td></tr><tr><td class="mono">ciudad</td><td class="mono">varchar(80)</td><td>sí</td><td></td><td class="mono"></td></tr><tr><td class="mono">direccion</td><td class="mono">varchar(200)</td><td>sí</td><td></td><td class="mono"></td></tr><tr><td class="mono">activo</td><td class="mono">boolean</td><td>NO</td><td></td><td class="mono">true</td></tr><tr><td class="mono">creado_en</td><td class="mono">timestamptz</td><td>NO</td><td></td><td class="mono">now()</td></tr>
+    </table>
+  </div>
+  <div class="tabla-dic">
+    <h4>almacenes <span>Almacenes / sucursales físicas</span></h4>
+    <table class="tabla tabla-mini">
+      <tr><th>Columna</th><th>Tipo</th><th>Nulo</th><th>Llaves</th><th>Por defecto</th></tr>
+      <tr><td class="mono">id_almacen</td><td class="mono">smallint</td><td>NO</td><td>PK</td><td class="mono">IDENTITY</td></tr><tr><td class="mono">nombre</td><td class="mono">varchar(80)</td><td>NO</td><td>UK</td><td class="mono"></td></tr><tr><td class="mono">ubicacion</td><td class="mono">varchar(200)</td><td>sí</td><td></td><td class="mono"></td></tr><tr><td class="mono">id_responsable</td><td class="mono">integer</td><td>sí</td><td>FK → usuarios</td><td class="mono"></td></tr><tr><td class="mono">activo</td><td class="mono">boolean</td><td>NO</td><td></td><td class="mono">true</td></tr>
+    </table>
+  </div>
+  <div class="tabla-dic">
+    <h4>tipos_movimiento <span>Motivos de entrada y salida de mercancía</span></h4>
+    <table class="tabla tabla-mini">
+      <tr><th>Columna</th><th>Tipo</th><th>Nulo</th><th>Llaves</th><th>Por defecto</th></tr>
+      <tr><td class="mono">id_tipo</td><td class="mono">smallint</td><td>NO</td><td>PK</td><td class="mono">IDENTITY</td></tr><tr><td class="mono">nombre</td><td class="mono">varchar(40)</td><td>NO</td><td>UK</td><td class="mono"></td></tr><tr><td class="mono">naturaleza</td><td class="mono">varchar(7)</td><td>NO</td><td></td><td class="mono"></td></tr><tr><td class="mono">requiere_proveedor</td><td class="mono">boolean</td><td>NO</td><td></td><td class="mono">false</td></tr><tr><td class="mono">descripcion</td><td class="mono">varchar(255)</td><td>sí</td><td></td><td class="mono"></td></tr>
+    </table>
+  </div>
+  <div class="tabla-dic">
+    <h4>productos <span>Catálogo de productos</span></h4>
+    <table class="tabla tabla-mini">
+      <tr><th>Columna</th><th>Tipo</th><th>Nulo</th><th>Llaves</th><th>Por defecto</th></tr>
+      <tr><td class="mono">id_producto</td><td class="mono">integer</td><td>NO</td><td>PK</td><td class="mono">IDENTITY</td></tr><tr><td class="mono">sku</td><td class="mono">varchar(20)</td><td>NO</td><td>UK</td><td class="mono"></td></tr><tr><td class="mono">nombre</td><td class="mono">varchar(150)</td><td>NO</td><td></td><td class="mono"></td></tr><tr><td class="mono">descripcion</td><td class="mono">text</td><td>sí</td><td></td><td class="mono"></td></tr><tr><td class="mono">id_categoria</td><td class="mono">smallint</td><td>NO</td><td>FK → categorias</td><td class="mono"></td></tr><tr><td class="mono">unidad</td><td class="mono">varchar(20)</td><td>NO</td><td></td><td class="mono">'pieza'</td></tr><tr><td class="mono">precio_compra</td><td class="mono">numeric(12,2)</td><td>NO</td><td></td><td class="mono"></td></tr><tr><td class="mono">precio_venta</td><td class="mono">numeric(12,2)</td><td>NO</td><td></td><td class="mono"></td></tr><tr><td class="mono">stock_minimo</td><td class="mono">integer</td><td>NO</td><td></td><td class="mono">0</td></tr><tr><td class="mono">stock_maximo</td><td class="mono">integer</td><td>NO</td><td></td><td class="mono">0</td></tr><tr><td class="mono">activo</td><td class="mono">boolean</td><td>NO</td><td></td><td class="mono">true</td></tr><tr><td class="mono">creado_en</td><td class="mono">timestamptz</td><td>NO</td><td></td><td class="mono">now()</td></tr><tr><td class="mono">actualizado_en</td><td class="mono">timestamptz</td><td>NO</td><td></td><td class="mono">now()</td></tr>
+    </table>
+  </div>
+  <div class="tabla-dic">
+    <h4>producto_proveedor <span>Relación N:M producto-proveedor con costo y tiempo de entrega</span></h4>
+    <table class="tabla tabla-mini">
+      <tr><th>Columna</th><th>Tipo</th><th>Nulo</th><th>Llaves</th><th>Por defecto</th></tr>
+      <tr><td class="mono">id_producto</td><td class="mono">integer</td><td>NO</td><td>PK, FK → productos</td><td class="mono"></td></tr><tr><td class="mono">id_proveedor</td><td class="mono">integer</td><td>NO</td><td>PK, FK → proveedores</td><td class="mono"></td></tr><tr><td class="mono">costo</td><td class="mono">numeric(12,2)</td><td>NO</td><td></td><td class="mono"></td></tr><tr><td class="mono">dias_entrega</td><td class="mono">smallint</td><td>NO</td><td></td><td class="mono">3</td></tr><tr><td class="mono">es_principal</td><td class="mono">boolean</td><td>NO</td><td></td><td class="mono">false</td></tr>
+    </table>
+  </div>
+  <div class="tabla-dic">
+    <h4>inventario <span>Existencias por producto y almacén (N:M)</span></h4>
+    <table class="tabla tabla-mini">
+      <tr><th>Columna</th><th>Tipo</th><th>Nulo</th><th>Llaves</th><th>Por defecto</th></tr>
+      <tr><td class="mono">id_producto</td><td class="mono">integer</td><td>NO</td><td>PK, FK → productos</td><td class="mono"></td></tr><tr><td class="mono">id_almacen</td><td class="mono">smallint</td><td>NO</td><td>PK, FK → almacenes</td><td class="mono"></td></tr><tr><td class="mono">existencia</td><td class="mono">integer</td><td>NO</td><td></td><td class="mono">0</td></tr><tr><td class="mono">ubicacion</td><td class="mono">varchar(30)</td><td>sí</td><td></td><td class="mono"></td></tr><tr><td class="mono">actualizado_en</td><td class="mono">timestamptz</td><td>NO</td><td></td><td class="mono">now()</td></tr>
+    </table>
+  </div>
+  <div class="tabla-dic">
+    <h4>movimientos <span>Kardex: historial de entradas y salidas</span></h4>
+    <table class="tabla tabla-mini">
+      <tr><th>Columna</th><th>Tipo</th><th>Nulo</th><th>Llaves</th><th>Por defecto</th></tr>
+      <tr><td class="mono">id_movimiento</td><td class="mono">integer</td><td>NO</td><td>PK</td><td class="mono">IDENTITY</td></tr><tr><td class="mono">folio</td><td class="mono">varchar(12)</td><td>sí</td><td>UK</td><td class="mono">GENERADA</td></tr><tr><td class="mono">id_tipo</td><td class="mono">smallint</td><td>NO</td><td>FK → tipos_movimiento</td><td class="mono"></td></tr><tr><td class="mono">id_producto</td><td class="mono">integer</td><td>NO</td><td>FK → productos</td><td class="mono"></td></tr><tr><td class="mono">id_almacen</td><td class="mono">smallint</td><td>NO</td><td>FK → almacenes</td><td class="mono"></td></tr><tr><td class="mono">id_proveedor</td><td class="mono">integer</td><td>sí</td><td>FK → proveedores</td><td class="mono"></td></tr><tr><td class="mono">id_usuario</td><td class="mono">integer</td><td>NO</td><td>FK → usuarios</td><td class="mono"></td></tr><tr><td class="mono">cantidad</td><td class="mono">integer</td><td>NO</td><td></td><td class="mono"></td></tr><tr><td class="mono">costo_unitario</td><td class="mono">numeric(12,2)</td><td>NO</td><td></td><td class="mono">0</td></tr><tr><td class="mono">existencia_resultante</td><td class="mono">integer</td><td>NO</td><td></td><td class="mono"></td></tr><tr><td class="mono">referencia</td><td class="mono">varchar(60)</td><td>sí</td><td></td><td class="mono"></td></tr><tr><td class="mono">observaciones</td><td class="mono">varchar(255)</td><td>sí</td><td></td><td class="mono"></td></tr><tr><td class="mono">fecha</td><td class="mono">timestamptz</td><td>NO</td><td></td><td class="mono">now()</td></tr>
+    </table>
+  </div>
+  <div class="tabla-dic">
+    <h4>bitacora <span>Auditoría de acciones de los usuarios</span></h4>
+    <table class="tabla tabla-mini">
+      <tr><th>Columna</th><th>Tipo</th><th>Nulo</th><th>Llaves</th><th>Por defecto</th></tr>
+      <tr><td class="mono">id_bitacora</td><td class="mono">bigint</td><td>NO</td><td>PK</td><td class="mono">IDENTITY</td></tr><tr><td class="mono">id_usuario</td><td class="mono">integer</td><td>sí</td><td>FK → usuarios</td><td class="mono"></td></tr><tr><td class="mono">accion</td><td class="mono">varchar(30)</td><td>NO</td><td></td><td class="mono"></td></tr><tr><td class="mono">modulo</td><td class="mono">varchar(30)</td><td>NO</td><td></td><td class="mono"></td></tr><tr><td class="mono">descripcion</td><td class="mono">varchar(255)</td><td>sí</td><td></td><td class="mono"></td></tr><tr><td class="mono">fecha</td><td class="mono">timestamptz</td><td>NO</td><td></td><td class="mono">now()</td></tr>
+    </table>
+  </div></div>
+  <p>El script completo de creación está en <code>database/01_esquema.sql</code>.</p>
+</section>
+
+<section>
+  <h2>3. Scripts de roles y usuarios</h2>
+  <p>Matriz de permisos implementada:</p>
+  <table class="tabla matriz">
+    <tr><th>Permiso</th><th><code>developer</code></th><th><code>"user"</code></th></tr>
+    <tr><td>Iniciar sesión (LOGIN)</td><td>✔</td><td>✔</td></tr>
+    <tr><td>Conectarse a la BD (CONNECT)</td><td>✔</td><td>✔</td></tr>
+    <tr><td>Crear objetos en <code>public</code> (CREATE)</td><td>✔</td><td>✘</td></tr>
+    <tr><td>Tablas temporales (TEMPORARY)</td><td>✔</td><td>✘</td></tr>
+    <tr><td>CRUD en tablas existentes</td><td>✔</td><td>✔</td></tr>
+    <tr><td>CRUD por defecto en tablas futuras</td><td>✔</td><td>✔</td></tr>
+    <tr><td>Ejecutar funciones</td><td>✔</td><td>✔</td></tr>
+  </table>
+  <p>Usuarios: <code>dev_ana</code> y <code>dev_luis</code> → <code>developer</code>; <code>app_nexo</code> (cuenta de servicio de la aplicación) y
+  <code>usr_carlos</code> → <code>"user"</code>. Puntos clave del script:</p>
+  <ul>
+    <li><code>USER</code> es palabra reservada en PostgreSQL, por eso el rol se escribe entre comillas: <code>"user"</code>.</li>
+    <li>Los permisos por defecto (<code>ALTER DEFAULT PRIVILEGES</code>) se declaran para los dos roles que pueden crear objetos: el propietario y <code>developer</code>.</li>
+    <li><code>ALTER ROLE dev_ana SET role = 'developer'</code> hace que los desarrolladores creen objetos <em>como</em> <code>developer</code>, de modo que las tablas nuevas son del equipo y reciben automáticamente los permisos por defecto.</li>
+    <li>Las contraseñas no se guardan en el repositorio: el script usa marcadores <code>{{PWD_...}}</code> que se sustituyen desde <code>.env</code>.</li>
+  </ul>
+  <h4>database/02_roles_usuarios.sql</h4>
+  <pre class="sql" style="font-size:7.25pt"><span class="c">-- =====================================================================</span>
+<span class="c">-- Script 02 · Roles y usuarios con permisos diferenciados</span>
+<span class="c">-- Ejecutar como: propietario de la BD (nexo_inventario_owner)</span>
+<span class="c">--</span>
+<span class="c">-- NOTA sobre contraseñas: los valores {{PWD_...}} se sustituyen desde el</span>
+<span class="c">-- archivo .env al ejecutar `npm run sql -- database/02_roles_usuarios.sql`.</span>
+<span class="c">-- Si pegas este script en el SQL Editor de Neon, reemplázalos a mano por</span>
+<span class="c">-- contraseñas seguras (Neon exige contraseñas con suficiente entropía).</span>
+<span class="c">--</span>
+<span class="c">-- NOTA sobre el nombre &quot;user&quot;: USER es palabra reservada en PostgreSQL</span>
+<span class="c">-- (equivale a CURRENT_USER), por eso el rol se escribe entre comillas.</span>
+<span class="c">-- =====================================================================</span>
+
+<span class="c">-- Seguridad base: nadie crea objetos por &quot;herencia&quot; del pseudo-rol PUBLIC.</span>
+<span class="c">-- (Desde PostgreSQL 15 ya no hay CREATE en public para PUBLIC; lo dejamos explícito.)</span>
+<span class="k">REVOKE</span> <span class="k">CREATE</span> <span class="k">ON</span> <span class="k">SCHEMA</span> public <span class="k">FROM</span> PUBLIC;
+<span class="k">REVOKE</span> <span class="k">CREATE</span>, <span class="k">TEMPORARY</span> <span class="k">ON</span> <span class="k">DATABASE</span> nexo_inventario <span class="k">FROM</span> PUBLIC;
+
+<span class="c">-- =====================================================================</span>
+<span class="c">-- 3.1 Rol developer</span>
+<span class="c">-- =====================================================================</span>
+<span class="k">CREATE</span> <span class="k">ROLE</span> developer <span class="k">WITH</span> <span class="k">LOGIN</span> <span class="k">NOSUPERUSER</span> <span class="k">NOCREATEDB</span> <span class="k">NOCREATEROLE</span> <span class="k">INHERIT</span>;
+
+<span class="c">-- Permiso de conexión a la base de datos (+ tablas temporales)</span>
+<span class="k">GRANT</span> <span class="k">CONNECT</span>, <span class="k">TEMPORARY</span> <span class="k">ON</span> <span class="k">DATABASE</span> nexo_inventario <span class="k">TO</span> developer;
+
+<span class="c">-- Permiso de creación en el esquema public</span>
+<span class="k">GRANT</span> <span class="k">USAGE</span>, <span class="k">CREATE</span> <span class="k">ON</span> <span class="k">SCHEMA</span> public <span class="k">TO</span> developer;
+
+<span class="c">-- CRUD en tablas existentes (+ secuencias y funciones necesarias para operar)</span>
+<span class="k">GRANT</span> <span class="k">SELECT</span>, <span class="k">INSERT</span>, <span class="k">UPDATE</span>, <span class="k">DELETE</span> <span class="k">ON</span> <span class="k">ALL</span> <span class="k">TABLES</span>    <span class="k">IN</span> <span class="k">SCHEMA</span> public <span class="k">TO</span> developer;
+<span class="k">GRANT</span> <span class="k">USAGE</span>, <span class="k">SELECT</span>, <span class="k">UPDATE</span>          <span class="k">ON</span> <span class="k">ALL</span> <span class="k">SEQUENCES</span> <span class="k">IN</span> <span class="k">SCHEMA</span> public <span class="k">TO</span> developer;
+<span class="k">GRANT</span> <span class="k">EXECUTE</span>                        <span class="k">ON</span> <span class="k">ALL</span> <span class="k">FUNCTIONS</span> <span class="k">IN</span> <span class="k">SCHEMA</span> public <span class="k">TO</span> developer;
+
+<span class="c">-- =====================================================================</span>
+<span class="c">-- 3.2 Rol &quot;user&quot;</span>
+<span class="c">-- =====================================================================</span>
+<span class="k">CREATE</span> <span class="k">ROLE</span> &quot;user&quot; <span class="k">WITH</span> <span class="k">LOGIN</span> <span class="k">NOSUPERUSER</span> <span class="k">NOCREATEDB</span> <span class="k">NOCREATEROLE</span> <span class="k">INHERIT</span>;
+
+<span class="c">-- Permiso de conexión (sin TEMPORARY: no puede crear ni tablas temporales)</span>
+<span class="k">GRANT</span> <span class="k">CONNECT</span> <span class="k">ON</span> <span class="k">DATABASE</span> nexo_inventario <span class="k">TO</span> &quot;user&quot;;
+
+<span class="c">-- Sólo USAGE en el esquema: puede ver/usar objetos, NO crearlos</span>
+<span class="k">GRANT</span> <span class="k">USAGE</span> <span class="k">ON</span> <span class="k">SCHEMA</span> public <span class="k">TO</span> &quot;user&quot;;
+<span class="k">REVOKE</span> <span class="k">CREATE</span> <span class="k">ON</span> <span class="k">SCHEMA</span> public <span class="k">FROM</span> &quot;user&quot;;
+
+<span class="c">-- CRUD en tablas existentes</span>
+<span class="k">GRANT</span> <span class="k">SELECT</span>, <span class="k">INSERT</span>, <span class="k">UPDATE</span>, <span class="k">DELETE</span> <span class="k">ON</span> <span class="k">ALL</span> <span class="k">TABLES</span>    <span class="k">IN</span> <span class="k">SCHEMA</span> public <span class="k">TO</span> &quot;user&quot;;
+<span class="k">GRANT</span> <span class="k">USAGE</span>, <span class="k">SELECT</span>                  <span class="k">ON</span> <span class="k">ALL</span> <span class="k">SEQUENCES</span> <span class="k">IN</span> <span class="k">SCHEMA</span> public <span class="k">TO</span> &quot;user&quot;;
+<span class="k">GRANT</span> <span class="k">EXECUTE</span>                        <span class="k">ON</span> <span class="k">ALL</span> <span class="k">FUNCTIONS</span> <span class="k">IN</span> <span class="k">SCHEMA</span> public <span class="k">TO</span> &quot;user&quot;;
+
+<span class="c">-- =====================================================================</span>
+<span class="c">-- 3.3 Permisos por defecto en objetos FUTUROS</span>
+<span class="c">--   Se definen para los dos roles que pueden crear objetos:</span>
+<span class="c">--   · nexo_inventario_owner (propietario, ejecuta los scripts)</span>
+<span class="c">--   · developer (los desarrolladores crean objetos como developer)</span>
+<span class="c">-- =====================================================================</span>
+<span class="c">-- El propietario necesita ser miembro de developer para fijar sus privilegios por defecto</span>
+<span class="k">GRANT</span> developer <span class="k">TO</span> nexo_inventario_owner <span class="k">WITH</span> <span class="k">INHERIT</span> <span class="k">TRUE</span>, <span class="k">SET</span> <span class="k">TRUE</span>;
+
+<span class="c">-- Objetos creados por el propietario</span>
+<span class="k">ALTER</span> <span class="k">DEFAULT</span> <span class="k">PRIVILEGES</span> <span class="k">FOR</span> <span class="k">ROLE</span> nexo_inventario_owner <span class="k">IN</span> <span class="k">SCHEMA</span> public
+    <span class="k">GRANT</span> <span class="k">SELECT</span>, <span class="k">INSERT</span>, <span class="k">UPDATE</span>, <span class="k">DELETE</span> <span class="k">ON</span> <span class="k">TABLES</span> <span class="k">TO</span> developer, &quot;user&quot;;
+<span class="k">ALTER</span> <span class="k">DEFAULT</span> <span class="k">PRIVILEGES</span> <span class="k">FOR</span> <span class="k">ROLE</span> nexo_inventario_owner <span class="k">IN</span> <span class="k">SCHEMA</span> public
+    <span class="k">GRANT</span> <span class="k">USAGE</span>, <span class="k">SELECT</span>, <span class="k">UPDATE</span> <span class="k">ON</span> <span class="k">SEQUENCES</span> <span class="k">TO</span> developer;
+<span class="k">ALTER</span> <span class="k">DEFAULT</span> <span class="k">PRIVILEGES</span> <span class="k">FOR</span> <span class="k">ROLE</span> nexo_inventario_owner <span class="k">IN</span> <span class="k">SCHEMA</span> public
+    <span class="k">GRANT</span> <span class="k">USAGE</span>, <span class="k">SELECT</span> <span class="k">ON</span> <span class="k">SEQUENCES</span> <span class="k">TO</span> &quot;user&quot;;
+<span class="k">ALTER</span> <span class="k">DEFAULT</span> <span class="k">PRIVILEGES</span> <span class="k">FOR</span> <span class="k">ROLE</span> nexo_inventario_owner <span class="k">IN</span> <span class="k">SCHEMA</span> public
+    <span class="k">GRANT</span> <span class="k">EXECUTE</span> <span class="k">ON</span> <span class="k">FUNCTIONS</span> <span class="k">TO</span> developer, &quot;user&quot;;
+
+<span class="c">-- Objetos creados por developer</span>
+<span class="k">ALTER</span> <span class="k">DEFAULT</span> <span class="k">PRIVILEGES</span> <span class="k">FOR</span> <span class="k">ROLE</span> developer <span class="k">IN</span> <span class="k">SCHEMA</span> public
+    <span class="k">GRANT</span> <span class="k">SELECT</span>, <span class="k">INSERT</span>, <span class="k">UPDATE</span>, <span class="k">DELETE</span> <span class="k">ON</span> <span class="k">TABLES</span> <span class="k">TO</span> developer, &quot;user&quot;;
+<span class="k">ALTER</span> <span class="k">DEFAULT</span> <span class="k">PRIVILEGES</span> <span class="k">FOR</span> <span class="k">ROLE</span> developer <span class="k">IN</span> <span class="k">SCHEMA</span> public
+    <span class="k">GRANT</span> <span class="k">USAGE</span>, <span class="k">SELECT</span>, <span class="k">UPDATE</span> <span class="k">ON</span> <span class="k">SEQUENCES</span> <span class="k">TO</span> developer;
+<span class="k">ALTER</span> <span class="k">DEFAULT</span> <span class="k">PRIVILEGES</span> <span class="k">FOR</span> <span class="k">ROLE</span> developer <span class="k">IN</span> <span class="k">SCHEMA</span> public
+    <span class="k">GRANT</span> <span class="k">USAGE</span>, <span class="k">SELECT</span> <span class="k">ON</span> <span class="k">SEQUENCES</span> <span class="k">TO</span> &quot;user&quot;;
+<span class="k">ALTER</span> <span class="k">DEFAULT</span> <span class="k">PRIVILEGES</span> <span class="k">FOR</span> <span class="k">ROLE</span> developer <span class="k">IN</span> <span class="k">SCHEMA</span> public
+    <span class="k">GRANT</span> <span class="k">EXECUTE</span> <span class="k">ON</span> <span class="k">FUNCTIONS</span> <span class="k">TO</span> developer, &quot;user&quot;;
+
+<span class="c">-- =====================================================================</span>
+<span class="c">-- 4. Usuarios (roles con contraseña) y asignación de roles</span>
+<span class="c">-- =====================================================================</span>
+<span class="c">-- Desarrolladores</span>
+<span class="k">CREATE</span> <span class="k">ROLE</span> dev_ana  <span class="k">WITH</span> <span class="k">LOGIN</span> <span class="k">PASSWORD</span> <span class="s">'{{PWD_DEV_ANA}}'</span>  <span class="k">IN</span> <span class="k">ROLE</span> developer;
+<span class="k">CREATE</span> <span class="k">ROLE</span> dev_luis <span class="k">WITH</span> <span class="k">LOGIN</span> <span class="k">PASSWORD</span> <span class="s">'{{PWD_DEV_LUIS}}'</span> <span class="k">IN</span> <span class="k">ROLE</span> developer;
+
+<span class="c">-- Al iniciar sesión, los desarrolladores actúan como &quot;developer&quot;: así los</span>
+<span class="c">-- objetos que creen pertenecen al rol del equipo y reciben los permisos por defecto.</span>
+<span class="k">ALTER</span> <span class="k">ROLE</span> dev_ana  <span class="k">SET</span> <span class="k">role</span> = <span class="s">'developer'</span>;
+<span class="k">ALTER</span> <span class="k">ROLE</span> dev_luis <span class="k">SET</span> <span class="k">role</span> = <span class="s">'developer'</span>;
+
+<span class="c">-- Usuarios operativos</span>
+<span class="k">CREATE</span> <span class="k">ROLE</span> app_nexo   <span class="k">WITH</span> <span class="k">LOGIN</span> <span class="k">PASSWORD</span> <span class="s">'{{PWD_APP_NEXO}}'</span>   <span class="k">IN</span> <span class="k">ROLE</span> &quot;user&quot;;  <span class="c">-- lo usa la aplicación web</span>
+<span class="k">CREATE</span> <span class="k">ROLE</span> usr_carlos <span class="k">WITH</span> <span class="k">LOGIN</span> <span class="k">PASSWORD</span> <span class="s">'{{PWD_USR_CARLOS}}'</span> <span class="k">IN</span> <span class="k">ROLE</span> &quot;user&quot;;
+
+<span class="k">COMMENT</span> <span class="k">ON</span> <span class="k">ROLE</span> developer  <span class="k">IS</span> <span class="s">'Equipo de desarrollo: CRUD + creación de objetos en public'</span>;
+<span class="k">COMMENT</span> <span class="k">ON</span> <span class="k">ROLE</span> &quot;user&quot;     <span class="k">IS</span> <span class="s">'Usuarios operativos: CRUD sin creación de objetos'</span>;
+<span class="k">COMMENT</span> <span class="k">ON</span> <span class="k">ROLE</span> dev_ana    <span class="k">IS</span> <span class="s">'Desarrolladora (miembro de developer)'</span>;
+<span class="k">COMMENT</span> <span class="k">ON</span> <span class="k">ROLE</span> dev_luis   <span class="k">IS</span> <span class="s">'Desarrollador (miembro de developer)'</span>;
+<span class="k">COMMENT</span> <span class="k">ON</span> <span class="k">ROLE</span> app_nexo   <span class="k">IS</span> <span class="s">'Cuenta de servicio de la aplicación web (miembro de user)'</span>;
+<span class="k">COMMENT</span> <span class="k">ON</span> <span class="k">ROLE</span> usr_carlos <span class="k">IS</span> <span class="s">'Analista de inventario (miembro de user)'</span>;
+</pre>
+</section>
+
+<section>
+  <h2>4. Scripts de vistas y funciones</h2>
+  <h3>4.1 Vistas con CTEs</h3>
+  <table class="tabla">
+    <tr><th>Vista</th><th>CTEs</th><th>Propósito</th></tr>
+    <tr><td><code>vw_estado_inventario</code></td><td><code>existencias</code>, <code>actividad</code>, <code>consolidado</code></td><td>Existencia total por producto, valor, salidas de 30 días, días de cobertura y semáforo (SIN STOCK / BAJO / NORMAL / EXCESO). Alimenta dashboard, inventario y catálogo.</td></tr>
+    <tr><td><code>vw_movimientos_diarios</code></td><td><code>calendario</code>, <code>detalle</code>, <code>agregado</code></td><td>Serie diaria de los últimos 30 días con entradas, salidas e importes; el calendario generado con <code>generate_series</code> hace que los días sin movimientos aparezcan en cero. Alimenta la gráfica del dashboard.</td></tr>
+  </table>
+  <h4>database/03_vistas.sql</h4>
+  <pre class="sql" style="font-size:8.00pt"><span class="c">-- =====================================================================</span>
+<span class="c">-- Script 03 · Vistas construidas con CTEs (Common Table Expressions)</span>
+<span class="c">-- Ejecutar como: propietario de la BD (nexo_inventario_owner)</span>
+<span class="c">-- Los permisos llegan solos gracias a ALTER DEFAULT PRIVILEGES (script 02).</span>
+<span class="c">-- =====================================================================</span>
+
+<span class="c">-- ---------------------------------------------------------------------</span>
+<span class="c">-- Vista 1 · vw_estado_inventario</span>
+<span class="c">-- Estado consolidado de cada producto activo: existencia total en todos</span>
+<span class="c">-- los almacenes, valor del inventario, rotación de los últimos 30 días,</span>
+<span class="c">-- días de cobertura y semáforo (SIN STOCK / BAJO / NORMAL / EXCESO).</span>
+<span class="c">-- La usan: Dashboard, Inventario y Catálogo.</span>
+<span class="c">-- ---------------------------------------------------------------------</span>
+<span class="k">CREATE</span> <span class="k">OR</span> <span class="k">REPLACE</span> <span class="k">VIEW</span> vw_estado_inventario <span class="k">AS</span>
+<span class="k">WITH</span> existencias <span class="k">AS</span> (          <span class="c">-- CTE 1: existencia total por producto</span>
+    <span class="k">SELECT</span> i.id_producto,
+           <span class="k">SUM</span>(i.existencia)::INTEGER                     <span class="k">AS</span> existencia_total,
+           <span class="k">COUNT</span>(*) <span class="k">FILTER</span> (<span class="k">WHERE</span> i.existencia &gt; 0)::INTEGER <span class="k">AS</span> almacenes_con_stock
+    <span class="k">FROM</span> inventario i
+    <span class="k">GROUP</span> <span class="k">BY</span> i.id_producto
+),
+actividad <span class="k">AS</span> (                 <span class="c">-- CTE 2: rotación reciente por producto</span>
+    <span class="k">SELECT</span> m.id_producto,
+           <span class="k">MAX</span>(m.fecha) <span class="k">AS</span> ultimo_movimiento,
+           <span class="k">COALESCE</span>(<span class="k">SUM</span>(m.cantidad) <span class="k">FILTER</span> (
+               <span class="k">WHERE</span> t.naturaleza = <span class="s">'SALIDA'</span>
+                 <span class="k">AND</span> m.fecha &gt;= now() - <span class="k">INTERVAL</span> <span class="s">'30 days'</span>), 0)::INTEGER <span class="k">AS</span> salidas_30d
+    <span class="k">FROM</span> movimientos m
+    <span class="k">JOIN</span> tipos_movimiento t <span class="k">ON</span> t.id_tipo = m.id_tipo
+    <span class="k">GROUP</span> <span class="k">BY</span> m.id_producto
+),
+consolidado <span class="k">AS</span> (               <span class="c">-- CTE 3: une catálogo + existencias + actividad</span>
+    <span class="k">SELECT</span> p.id_producto, p.sku, p.nombre, p.unidad,
+           c.id_categoria, c.nombre <span class="k">AS</span> categoria, c.color <span class="k">AS</span> color_categoria,
+           p.precio_compra, p.precio_venta, p.stock_minimo, p.stock_maximo,
+           <span class="k">COALESCE</span>(e.existencia_total, 0)    <span class="k">AS</span> existencia_total,
+           <span class="k">COALESCE</span>(e.almacenes_con_stock, 0) <span class="k">AS</span> almacenes_con_stock,
+           <span class="k">COALESCE</span>(a.salidas_30d, 0)         <span class="k">AS</span> salidas_30d,
+           a.ultimo_movimiento
+    <span class="k">FROM</span> productos p
+    <span class="k">JOIN</span> categorias c       <span class="k">ON</span> c.id_categoria = p.id_categoria
+    <span class="k">LEFT</span> <span class="k">JOIN</span> existencias e <span class="k">ON</span> e.id_producto  = p.id_producto
+    <span class="k">LEFT</span> <span class="k">JOIN</span> actividad a   <span class="k">ON</span> a.id_producto  = p.id_producto
+    <span class="k">WHERE</span> p.activo
+)
+<span class="k">SELECT</span> id_producto, sku, nombre, unidad,
+       id_categoria, categoria, color_categoria,
+       precio_compra, precio_venta, stock_minimo, stock_maximo,
+       existencia_total, almacenes_con_stock,
+       <span class="k">ROUND</span>(existencia_total * precio_compra, 2) <span class="k">AS</span> valor_inventario,
+       salidas_30d,
+       <span class="k">CASE</span> <span class="k">WHEN</span> salidas_30d &gt; 0
+            <span class="k">THEN</span> <span class="k">ROUND</span>(existencia_total / (salidas_30d / 30.0), 1)
+       <span class="k">END</span> <span class="k">AS</span> dias_cobertura,
+       ultimo_movimiento,
+       <span class="k">CASE</span>
+           <span class="k">WHEN</span> existencia_total = 0                                <span class="k">THEN</span> <span class="s">'SIN STOCK'</span>
+           <span class="k">WHEN</span> existencia_total &lt;= stock_minimo                    <span class="k">THEN</span> <span class="s">'BAJO'</span>
+           <span class="k">WHEN</span> stock_maximo &gt; 0 <span class="k">AND</span> existencia_total &gt; stock_maximo <span class="k">THEN</span> <span class="s">'EXCESO'</span>
+           <span class="k">ELSE</span> <span class="s">'NORMAL'</span>
+       <span class="k">END</span> <span class="k">AS</span> estado
+<span class="k">FROM</span> consolidado;
+
+<span class="k">COMMENT</span> <span class="k">ON</span> <span class="k">VIEW</span> vw_estado_inventario <span class="k">IS</span>
+    <span class="s">'Existencia total, valor, rotación 30 días, cobertura y semáforo por producto (CTEs)'</span>;
+
+<span class="c">-- ---------------------------------------------------------------------</span>
+<span class="c">-- Vista 2 · vw_movimientos_diarios</span>
+<span class="c">-- Serie diaria de los últimos 30 días (hora de Ciudad de México) con</span>
+<span class="c">-- entradas, salidas, importes y número de movimientos. Los días sin</span>
+<span class="c">-- actividad aparecen en cero gracias al calendario generado en la CTE.</span>
+<span class="c">-- La usa: gráfica del Dashboard.</span>
+<span class="c">-- ---------------------------------------------------------------------</span>
+<span class="k">CREATE</span> <span class="k">OR</span> <span class="k">REPLACE</span> <span class="k">VIEW</span> vw_movimientos_diarios <span class="k">AS</span>
+<span class="k">WITH</span> calendario <span class="k">AS</span> (           <span class="c">-- CTE 1: los últimos 30 días, aunque no haya movimientos</span>
+    <span class="k">SELECT</span> generate_series(
+               (now() AT TIME ZONE <span class="s">'America/Mexico_City'</span>)::DATE - 29,
+               (now() AT TIME ZONE <span class="s">'America/Mexico_City'</span>)::DATE,
+               <span class="k">INTERVAL</span> <span class="s">'1 day'</span>)::DATE <span class="k">AS</span> dia
+),
+detalle <span class="k">AS</span> (                   <span class="c">-- CTE 2: movimientos del periodo con su naturaleza</span>
+    <span class="k">SELECT</span> (m.fecha AT TIME ZONE <span class="s">'America/Mexico_City'</span>)::DATE <span class="k">AS</span> dia,
+           t.naturaleza,
+           m.cantidad,
+           m.cantidad * m.costo_unitario <span class="k">AS</span> importe
+    <span class="k">FROM</span> movimientos m
+    <span class="k">JOIN</span> tipos_movimiento t <span class="k">ON</span> t.id_tipo = m.id_tipo
+    <span class="k">WHERE</span> m.fecha &gt;= now() - <span class="k">INTERVAL</span> <span class="s">'31 days'</span>
+),
+agregado <span class="k">AS</span> (                  <span class="c">-- CTE 3: totales por día y naturaleza</span>
+    <span class="k">SELECT</span> dia,
+           <span class="k">COUNT</span>(*)                                                <span class="k">AS</span> movimientos,
+           <span class="k">SUM</span>(cantidad) <span class="k">FILTER</span> (<span class="k">WHERE</span> naturaleza = <span class="s">'ENTRADA'</span>)     <span class="k">AS</span> unidades_entrada,
+           <span class="k">SUM</span>(cantidad) <span class="k">FILTER</span> (<span class="k">WHERE</span> naturaleza = <span class="s">'SALIDA'</span>)      <span class="k">AS</span> unidades_salida,
+           <span class="k">SUM</span>(importe)  <span class="k">FILTER</span> (<span class="k">WHERE</span> naturaleza = <span class="s">'ENTRADA'</span>)     <span class="k">AS</span> importe_entrada,
+           <span class="k">SUM</span>(importe)  <span class="k">FILTER</span> (<span class="k">WHERE</span> naturaleza = <span class="s">'SALIDA'</span>)      <span class="k">AS</span> importe_salida
+    <span class="k">FROM</span> detalle
+    <span class="k">GROUP</span> <span class="k">BY</span> dia
+)
+<span class="k">SELECT</span> c.dia,
+       <span class="k">COALESCE</span>(a.movimientos, 0)::INTEGER      <span class="k">AS</span> movimientos,
+       <span class="k">COALESCE</span>(a.unidades_entrada, 0)::INTEGER <span class="k">AS</span> unidades_entrada,
+       <span class="k">COALESCE</span>(a.unidades_salida, 0)::INTEGER  <span class="k">AS</span> unidades_salida,
+       <span class="k">COALESCE</span>(a.importe_entrada, 0)::NUMERIC(14,2) <span class="k">AS</span> importe_entrada,
+       <span class="k">COALESCE</span>(a.importe_salida, 0)::NUMERIC(14,2)  <span class="k">AS</span> importe_salida
+<span class="k">FROM</span> calendario c
+<span class="k">LEFT</span> <span class="k">JOIN</span> agregado a <span class="k">ON</span> a.dia = c.dia
+<span class="k">ORDER</span> <span class="k">BY</span> c.dia;
+
+<span class="k">COMMENT</span> <span class="k">ON</span> <span class="k">VIEW</span> vw_movimientos_diarios <span class="k">IS</span>
+    <span class="s">'Entradas y salidas por día de los últimos 30 días, con días vacíos en cero (CTEs)'</span>;
+</pre>
+  <h3>4.2 Funciones</h3>
+  <table class="tabla">
+    <tr><th>Función</th><th>Tipo</th><th>Descripción</th></tr>
+    <tr><td><code>fn_valor_inventario(p_id_categoria, p_id_almacen)</code></td><td>Cálculo (SQL, STABLE)</td><td>Valor del inventario = Σ existencia × precio de compra; ambos filtros opcionales.</td></tr>
+    <tr><td><code>fn_registrar_movimiento(...)</code></td><td>Inserción (PL/pgSQL)</td><td>Valida datos, bloquea la fila de inventario con <code>FOR UPDATE</code>, rechaza salidas sin existencia, inserta el movimiento con su existencia resultante y actualiza <code>inventario</code>. Todo o nada.</td></tr>
+  </table>
+  <h4>database/04_funciones.sql</h4>
+  <pre class="sql" style="font-size:7.53pt"><span class="c">-- =====================================================================</span>
+<span class="c">-- Script 04 · Funciones</span>
+<span class="c">--   1) fn_valor_inventario      → función de CÁLCULO</span>
+<span class="c">--   2) fn_registrar_movimiento  → función de INSERCIÓN</span>
+<span class="c">-- Ejecutar como: propietario de la BD (nexo_inventario_owner)</span>
+<span class="c">-- =====================================================================</span>
+
+<span class="c">-- ---------------------------------------------------------------------</span>
+<span class="c">-- Función 1 (cálculo) · fn_valor_inventario</span>
+<span class="c">-- Calcula el valor monetario del inventario (existencia × precio de</span>
+<span class="c">-- compra). Ambos filtros son opcionales: NULL = todos.</span>
+<span class="c">--   SELECT fn_valor_inventario();            -- toda la empresa</span>
+<span class="c">--   SELECT fn_valor_inventario(NULL, 2);     -- sólo el almacén 2</span>
+<span class="c">--   SELECT fn_valor_inventario(3);           -- sólo la categoría 3</span>
+<span class="c">-- ---------------------------------------------------------------------</span>
+<span class="k">CREATE</span> <span class="k">OR</span> <span class="k">REPLACE</span> <span class="k">FUNCTION</span> fn_valor_inventario(
+    p_id_categoria INTEGER <span class="k">DEFAULT</span> <span class="k">NULL</span>,
+    p_id_almacen   INTEGER <span class="k">DEFAULT</span> <span class="k">NULL</span>
+)
+<span class="k">RETURNS</span> NUMERIC(14,2)
+<span class="k">LANGUAGE</span> sql
+<span class="k">STABLE</span>
+<span class="k">AS</span> <span class="k">$$</span>
+    <span class="k">SELECT</span> <span class="k">COALESCE</span>(<span class="k">SUM</span>(i.existencia * p.precio_compra), 0)::NUMERIC(14,2)
+    <span class="k">FROM</span> inventario i
+    <span class="k">JOIN</span> productos  p <span class="k">ON</span> p.id_producto = i.id_producto
+    <span class="k">WHERE</span> p.activo
+      <span class="k">AND</span> (p_id_categoria <span class="k">IS</span> <span class="k">NULL</span> <span class="k">OR</span> p.id_categoria = p_id_categoria)
+      <span class="k">AND</span> (p_id_almacen   <span class="k">IS</span> <span class="k">NULL</span> <span class="k">OR</span> i.id_almacen   = p_id_almacen);
+<span class="k">$$</span>;
+
+<span class="k">COMMENT</span> <span class="k">ON</span> <span class="k">FUNCTION</span> fn_valor_inventario(INTEGER, INTEGER) <span class="k">IS</span>
+    <span class="s">'Cálculo: valor del inventario (existencia × precio de compra), filtrable por categoría y almacén'</span>;
+
+<span class="c">-- ---------------------------------------------------------------------</span>
+<span class="c">-- Función 2 (inserción) · fn_registrar_movimiento</span>
+<span class="c">-- Registra una entrada o salida de mercancía de forma atómica:</span>
+<span class="c">--   1. Valida cantidad, tipo, proveedor, producto y almacén.</span>
+<span class="c">--   2. Bloquea la fila de inventario (FOR UPDATE) para evitar carreras.</span>
+<span class="c">--   3. En salidas verifica que haya existencia suficiente.</span>
+<span class="c">--   4. INSERTA el movimiento (kardex) con la existencia resultante.</span>
+<span class="c">--   5. Actualiza (o crea) la existencia en la tabla inventario.</span>
+<span class="c">-- Devuelve el id del movimiento creado. Si algo falla, no se guarda nada.</span>
+<span class="c">-- ---------------------------------------------------------------------</span>
+<span class="k">CREATE</span> <span class="k">OR</span> <span class="k">REPLACE</span> <span class="k">FUNCTION</span> fn_registrar_movimiento(
+    p_id_producto    INTEGER,
+    p_id_almacen     INTEGER,
+    p_id_tipo        INTEGER,
+    p_cantidad       INTEGER,
+    p_id_usuario     INTEGER,
+    p_costo_unitario NUMERIC     <span class="k">DEFAULT</span> <span class="k">NULL</span>,
+    p_id_proveedor   INTEGER     <span class="k">DEFAULT</span> <span class="k">NULL</span>,
+    p_referencia     VARCHAR     <span class="k">DEFAULT</span> <span class="k">NULL</span>,
+    p_observaciones  VARCHAR     <span class="k">DEFAULT</span> <span class="k">NULL</span>,
+    p_fecha          TIMESTAMPTZ <span class="k">DEFAULT</span> now()
+)
+<span class="k">RETURNS</span> INTEGER
+<span class="k">LANGUAGE</span> plpgsql
+<span class="k">AS</span> <span class="k">$$</span>
+<span class="k">DECLARE</span>
+    v_naturaleza   VARCHAR(7);
+    v_req_prov     BOOLEAN;
+    v_precio       NUMERIC(12,2);
+    v_existencia   INTEGER;
+    v_nueva        INTEGER;
+    v_id           INTEGER;
+<span class="k">BEGIN</span>
+    <span class="k">IF</span> p_cantidad <span class="k">IS</span> <span class="k">NULL</span> <span class="k">OR</span> p_cantidad &lt;= 0 <span class="k">THEN</span>
+        <span class="k">RAISE</span> <span class="k">EXCEPTION</span> <span class="s">'La cantidad debe ser mayor a cero (recibido: %)'</span>, p_cantidad;
+    <span class="k">END</span> <span class="k">IF</span>;
+
+    <span class="k">SELECT</span> naturaleza, requiere_proveedor <span class="k">INTO</span> v_naturaleza, v_req_prov
+    <span class="k">FROM</span> tipos_movimiento <span class="k">WHERE</span> id_tipo = p_id_tipo;
+    <span class="k">IF</span> <span class="k">NOT</span> <span class="k">FOUND</span> <span class="k">THEN</span>
+        <span class="k">RAISE</span> <span class="k">EXCEPTION</span> <span class="s">'El tipo de movimiento % no existe'</span>, p_id_tipo;
+    <span class="k">END</span> <span class="k">IF</span>;
+    <span class="k">IF</span> v_req_prov <span class="k">AND</span> p_id_proveedor <span class="k">IS</span> <span class="k">NULL</span> <span class="k">THEN</span>
+        <span class="k">RAISE</span> <span class="k">EXCEPTION</span> <span class="s">'Este tipo de movimiento requiere indicar un proveedor'</span>;
+    <span class="k">END</span> <span class="k">IF</span>;
+
+    <span class="k">SELECT</span> precio_compra <span class="k">INTO</span> v_precio
+    <span class="k">FROM</span> productos <span class="k">WHERE</span> id_producto = p_id_producto <span class="k">AND</span> activo;
+    <span class="k">IF</span> <span class="k">NOT</span> <span class="k">FOUND</span> <span class="k">THEN</span>
+        <span class="k">RAISE</span> <span class="k">EXCEPTION</span> <span class="s">'El producto % no existe o está inactivo'</span>, p_id_producto;
+    <span class="k">END</span> <span class="k">IF</span>;
+
+    <span class="k">PERFORM</span> 1 <span class="k">FROM</span> almacenes <span class="k">WHERE</span> id_almacen = p_id_almacen <span class="k">AND</span> activo;
+    <span class="k">IF</span> <span class="k">NOT</span> <span class="k">FOUND</span> <span class="k">THEN</span>
+        <span class="k">RAISE</span> <span class="k">EXCEPTION</span> <span class="s">'El almacén % no existe o está inactivo'</span>, p_id_almacen;
+    <span class="k">END</span> <span class="k">IF</span>;
+
+    <span class="c">-- Garantiza que exista la fila de inventario y la bloquea</span>
+    <span class="k">INSERT</span> <span class="k">INTO</span> inventario (id_producto, id_almacen, existencia)
+    <span class="k">VALUES</span> (p_id_producto, p_id_almacen, 0)
+    <span class="k">ON</span> <span class="k">CONFLICT</span> (id_producto, id_almacen) <span class="k">DO</span> <span class="k">NOTHING</span>;
+
+    <span class="k">SELECT</span> existencia <span class="k">INTO</span> v_existencia
+    <span class="k">FROM</span> inventario
+    <span class="k">WHERE</span> id_producto = p_id_producto <span class="k">AND</span> id_almacen = p_id_almacen
+    <span class="k">FOR</span> <span class="k">UPDATE</span>;
+
+    <span class="k">IF</span> v_naturaleza = <span class="s">'ENTRADA'</span> <span class="k">THEN</span>
+        v_nueva := v_existencia + p_cantidad;
+    <span class="k">ELSE</span>
+        <span class="k">IF</span> v_existencia &lt; p_cantidad <span class="k">THEN</span>
+            <span class="k">RAISE</span> <span class="k">EXCEPTION</span> <span class="s">'Existencia insuficiente: hay % y se solicitan %'</span>, v_existencia, p_cantidad;
+        <span class="k">END</span> <span class="k">IF</span>;
+        v_nueva := v_existencia - p_cantidad;
+    <span class="k">END</span> <span class="k">IF</span>;
+
+    <span class="k">INSERT</span> <span class="k">INTO</span> movimientos (id_tipo, id_producto, id_almacen, id_proveedor, id_usuario,
+                             cantidad, costo_unitario, existencia_resultante,
+                             referencia, observaciones, fecha)
+    <span class="k">VALUES</span> (p_id_tipo, p_id_producto, p_id_almacen, p_id_proveedor, p_id_usuario,
+            p_cantidad, <span class="k">COALESCE</span>(p_costo_unitario, v_precio), v_nueva,
+            NULLIF(trim(p_referencia), <span class="s">''</span>), NULLIF(trim(p_observaciones), <span class="s">''</span>), p_fecha)
+    <span class="k">RETURNING</span> id_movimiento <span class="k">INTO</span> v_id;
+
+    <span class="k">UPDATE</span> inventario
+    <span class="k">SET</span> existencia = v_nueva, actualizado_en = now()
+    <span class="k">WHERE</span> id_producto = p_id_producto <span class="k">AND</span> id_almacen = p_id_almacen;
+
+    <span class="k">RETURN</span> v_id;
+<span class="k">END</span>;
+<span class="k">$$</span>;
+
+<span class="k">COMMENT</span> <span class="k">ON</span> <span class="k">FUNCTION</span> fn_registrar_movimiento(INTEGER, INTEGER, INTEGER, INTEGER, INTEGER,
+                                            NUMERIC, INTEGER, VARCHAR, VARCHAR, TIMESTAMPTZ) <span class="k">IS</span>
+    <span class="s">'Inserción: registra una entrada/salida validando existencias y actualiza el inventario'</span>;
+</pre>
+</section>
+
+<section>
+  <h2>5. Evidencias</h2>
+  <p>Cada bloque muestra el usuario con el que se inició sesión, la sentencia ejecutada y la salida real de PostgreSQL.
+  Las sentencias marcadas como <span class="esperado">error esperado</span> debían fallar para demostrar que un permiso o una validación funciona.</p>
+  
+  <div class="evidencia">
+    <h3 class="evidencia-titulo"><span>Evidencia 1</span> Base de datos creada en Neon</h3>
+    <table class="tabla"><tr><th colspan="2">Proyecto en Neon</th></tr>
+      <tr><th>Proyecto</th><td>nexo-inventario-u1</td></tr><tr><th>ID del proyecto</th><td>small-brook-55535774</td></tr><tr><th>Proveedor y región</th><td>AWS · us-east-2 (Ohio)</td></tr><tr><th>Versión</th><td>PostgreSQL 18</td></tr><tr><th>Rama</th><td>main (rama principal)</td></tr><tr><th>Base de datos</th><td>nexo_inventario</td></tr><tr><th>Propietario</th><td>nexo_inventario_owner</td></tr><tr><th>Conexión</th><td>Pooler de Neon con SSL obligatorio (sslmode=require); la app usa el driver HTTPS @neondatabase/serverless</td></tr><tr><th>Creado</th><td>2026-09-30 20:19 UTC</td></tr></table>
+    
+    
+      <div class="bloque">
+        <h4>1.1 Conexión a la base de datos en la nube <span class="usuario">nexo_inventario_owner</span></h4>
+        <pre class="sql" style="font-size:8.00pt"><span class="k">SELECT</span> current_database() <span class="k">AS</span> base_de_datos,
+       current_user       <span class="k">AS</span> usuario,
+       split_part(version(), <span class="s">' on '</span>, 1) <span class="k">AS</span> motor,
+       inet_server_port() <span class="k">AS</span> puerto,
+       pg_size_pretty(pg_database_size(current_database())) <span class="k">AS</span> tamano,
+       to_char(now() AT TIME ZONE <span class="s">'America/Mexico_City'</span>, <span class="s">'YYYY-MM-DD HH24:MI'</span>) <span class="k">AS</span> fecha_hora_mx;</pre><pre class="consola " style="font-size:7.32pt">  base_de_datos  |        usuario        |           motor           | puerto | tamano  |  fecha_hora_mx  
+-----------------+-----------------------+---------------------------+--------+---------+------------------
+ nexo_inventario | nexo_inventario_owner | PostgreSQL 18.6 (6569466) |   5432 | 8712 kB | 2026-09-30 14:55
+(1 fila)</pre>
+      </div>
+      <div class="bloque">
+        <h4>1.2 Esquemas y extensiones disponibles <span class="usuario">nexo_inventario_owner</span></h4>
+        <pre class="sql" style="font-size:8.00pt"><span class="k">SELECT</span> n.nspname <span class="k">AS</span> esquema, pg_get_userbyid(n.nspowner) <span class="k">AS</span> propietario
+<span class="k">FROM</span> pg_namespace n
+<span class="k">WHERE</span> n.nspname <span class="k">NOT</span> LIKE <span class="s">'pg\_%'</span> <span class="k">AND</span> n.nspname &lt;&gt; <span class="s">'information_schema'</span>
+<span class="k">ORDER</span> <span class="k">BY</span> 1;</pre><pre class="consola " style="font-size:8.00pt"> esquema |    propietario   
+---------+-------------------
+ public  | pg_database_owner
+(1 fila)</pre>
+      </div>
+    
+  </div>
+  <div class="evidencia">
+    <h3 class="evidencia-titulo"><span>Evidencia 2</span> Diseño e implementación de las tablas</h3>
+    
+    
+    
+      <div class="bloque">
+        <h4>2.1 Tablas creadas, número de columnas y registros <span class="usuario">nexo_inventario_owner</span></h4>
+        <pre class="sql" style="font-size:6.00pt"><span class="k">SELECT</span> c.relname <span class="k">AS</span> tabla,
+       (<span class="k">SELECT</span> <span class="k">count</span>(*) <span class="k">FROM</span> information_schema.columns col
+         <span class="k">WHERE</span> col.table_schema = <span class="s">'public'</span> <span class="k">AND</span> col.table_name = c.relname) <span class="k">AS</span> columnas,
+       (xpath(<span class="s">'/row/n/text()'</span>, query_to_xml(format(<span class="s">'SELECT count(*) AS n FROM %I'</span>, c.relname), <span class="k">false</span>, <span class="k">true</span>, <span class="s">''</span>)))[1]::text::int <span class="k">AS</span> registros,
+       obj_description(c.oid, <span class="s">'pg_class'</span>) <span class="k">AS</span> descripcion
+<span class="k">FROM</span> pg_class c <span class="k">JOIN</span> pg_namespace n <span class="k">ON</span> n.oid = c.relnamespace
+<span class="k">WHERE</span> n.nspname = <span class="s">'public'</span> <span class="k">AND</span> c.relkind = <span class="s">'r'</span>
+<span class="k">ORDER</span> <span class="k">BY</span> c.relname;</pre><pre class="consola " style="font-size:7.32pt">       tabla        | columnas | registros |                          descripcion                         
+--------------------+----------+-----------+---------------------------------------------------------------
+ almacenes          |        5 |         3 | Almacenes / sucursales físicas                               
+ bitacora           |        6 |         1 | Auditoría de acciones de los usuarios                        
+ categorias         |        6 |         8 | Categorías del catálogo de productos                         
+ inventario         |        5 |        99 | Existencias por producto y almacén (N:M)                     
+ movimientos        |       13 |       503 | Kardex: historial de entradas y salidas                      
+ producto_proveedor |        5 |        52 | Relación N:M producto-proveedor con costo y tiempo de entrega
+ productos          |       13 |        37 | Catálogo de productos                                        
+ proveedores        |       10 |         8 | Proveedores de mercancía                                     
+ tipos_movimiento   |        5 |         9 | Motivos de entrada y salida de mercancía                     
+ usuarios           |       10 |         5 | Usuarios del sistema web (rol de aplicación admin/usuario)   
+(10 filas)</pre>
+      </div>
+      <div class="bloque">
+        <h4>2.2 Llaves primarias <span class="usuario">nexo_inventario_owner</span></h4>
+        <pre class="sql" style="font-size:8.00pt"><span class="k">SELECT</span> tc.table_name <span class="k">AS</span> tabla, tc.constraint_name <span class="k">AS</span> restriccion,
+       string_agg(kcu.column_name, <span class="s">', '</span> <span class="k">ORDER</span> <span class="k">BY</span> kcu.ordinal_position) <span class="k">AS</span> columnas
+<span class="k">FROM</span> information_schema.table_constraints tc
+<span class="k">JOIN</span> information_schema.key_column_usage kcu
+  <span class="k">ON</span> kcu.constraint_name = tc.constraint_name <span class="k">AND</span> kcu.table_schema = tc.table_schema
+<span class="k">WHERE</span> tc.table_schema = <span class="s">'public'</span> <span class="k">AND</span> tc.constraint_type = <span class="s">'PRIMARY KEY'</span>
+<span class="k">GROUP</span> <span class="k">BY</span> tc.table_name, tc.constraint_name
+<span class="k">ORDER</span> <span class="k">BY</span> tc.table_name;</pre><pre class="consola " style="font-size:8.00pt">       tabla        |      restriccion      |         columnas         
+--------------------+-----------------------+---------------------------
+ almacenes          | almacenes_pkey        | id_almacen               
+ bitacora           | bitacora_pkey         | id_bitacora              
+ categorias         | categorias_pkey       | id_categoria             
+ inventario         | pk_inventario         | id_producto, id_almacen  
+ movimientos        | movimientos_pkey      | id_movimiento            
+ producto_proveedor | pk_producto_proveedor | id_producto, id_proveedor
+ productos          | productos_pkey        | id_producto              
+ proveedores        | proveedores_pkey      | id_proveedor             
+ tipos_movimiento   | tipos_movimiento_pkey | id_tipo                  
+ usuarios           | usuarios_pkey         | id_usuario               
+(10 filas)</pre>
+      </div>
+      <div class="bloque">
+        <h4>2.3 Llaves foráneas (relaciones 1:N y N:M) <span class="usuario">nexo_inventario_owner</span></h4>
+        <pre class="sql" style="font-size:8.00pt"><span class="k">SELECT</span> conrelid::regclass  <span class="k">AS</span> tabla_hija,
+       conname             <span class="k">AS</span> restriccion,
+       pg_get_constraintdef(oid) <span class="k">AS</span> definicion
+<span class="k">FROM</span> pg_constraint
+<span class="k">WHERE</span> contype = <span class="s">'f'</span> <span class="k">AND</span> connamespace = <span class="s">'public'</span>::regnamespace
+<span class="k">ORDER</span> <span class="k">BY</span> conrelid::regclass::text, conname;</pre><pre class="consola " style="font-size:5.26pt">     tabla_hija     |       restriccion        |                                             definicion                                             
+--------------------+--------------------------+-----------------------------------------------------------------------------------------------------
+ almacenes          | fk_almacenes_responsable | FOREIGN KEY (id_responsable) REFERENCES usuarios(id_usuario) ON UPDATE CASCADE ON DELETE SET NULL  
+ bitacora           | fk_bitacora_usuario      | FOREIGN KEY (id_usuario) REFERENCES usuarios(id_usuario) ON UPDATE CASCADE ON DELETE SET NULL      
+ inventario         | fk_inventario_almacen    | FOREIGN KEY (id_almacen) REFERENCES almacenes(id_almacen) ON UPDATE CASCADE ON DELETE RESTRICT     
+ inventario         | fk_inventario_producto   | FOREIGN KEY (id_producto) REFERENCES productos(id_producto) ON UPDATE CASCADE ON DELETE RESTRICT   
+ movimientos        | fk_mov_almacen           | FOREIGN KEY (id_almacen) REFERENCES almacenes(id_almacen)                                          
+ movimientos        | fk_mov_producto          | FOREIGN KEY (id_producto) REFERENCES productos(id_producto)                                        
+ movimientos        | fk_mov_proveedor         | FOREIGN KEY (id_proveedor) REFERENCES proveedores(id_proveedor)                                    
+ movimientos        | fk_mov_tipo              | FOREIGN KEY (id_tipo) REFERENCES tipos_movimiento(id_tipo)                                         
+ movimientos        | fk_mov_usuario           | FOREIGN KEY (id_usuario) REFERENCES usuarios(id_usuario)                                           
+ producto_proveedor | fk_pp_producto           | FOREIGN KEY (id_producto) REFERENCES productos(id_producto) ON UPDATE CASCADE ON DELETE CASCADE    
+ producto_proveedor | fk_pp_proveedor          | FOREIGN KEY (id_proveedor) REFERENCES proveedores(id_proveedor) ON UPDATE CASCADE ON DELETE CASCADE
+ productos          | fk_productos_categoria   | FOREIGN KEY (id_categoria) REFERENCES categorias(id_categoria) ON UPDATE CASCADE ON DELETE RESTRICT
+(12 filas)</pre>
+      </div>
+      <div class="bloque">
+        <h4>2.4 Restricciones CHECK y UNIQUE <span class="usuario">nexo_inventario_owner</span></h4>
+        <pre class="sql" style="font-size:8.00pt"><span class="k">SELECT</span> conrelid::regclass <span class="k">AS</span> tabla, conname <span class="k">AS</span> restriccion,
+       <span class="k">CASE</span> contype <span class="k">WHEN</span> <span class="s">'c'</span> <span class="k">THEN</span> <span class="s">'CHECK'</span> <span class="k">ELSE</span> <span class="s">'UNIQUE'</span> <span class="k">END</span> <span class="k">AS</span> tipo,
+       pg_get_constraintdef(oid) <span class="k">AS</span> definicion
+<span class="k">FROM</span> pg_constraint
+<span class="k">WHERE</span> contype <span class="k">IN</span> (<span class="s">'c'</span>, <span class="s">'u'</span>) <span class="k">AND</span> connamespace = <span class="s">'public'</span>::regnamespace
+<span class="k">ORDER</span> <span class="k">BY</span> conrelid::regclass::text, contype, conname;</pre><pre class="consola  ajustar" style="font-size:5.20pt">       tabla        |         restriccion         |  tipo  |                                                   definicion                                                   
+--------------------+-----------------------------+--------+-----------------------------------------------------------------------------------------------------------------
+ almacenes          | almacenes_nombre_key        | UNIQUE | UNIQUE (nombre)                                                                                                
+ categorias         | ck_categorias_color         | CHECK  | CHECK ((color ~ '^#[0-9A-Fa-f]{6}$'::text))                                                                    
+ categorias         | categorias_nombre_key       | UNIQUE | UNIQUE (nombre)                                                                                                
+ inventario         | ck_inventario_existencia    | CHECK  | CHECK ((existencia &gt;= 0))                                                                                      
+ movimientos        | ck_mov_cantidad             | CHECK  | CHECK ((cantidad &gt; 0))                                                                                         
+ movimientos        | ck_mov_costo                | CHECK  | CHECK ((costo_unitario &gt;= (0)::numeric))                                                                       
+ movimientos        | ck_mov_resultante           | CHECK  | CHECK ((existencia_resultante &gt;= 0))                                                                           
+ movimientos        | uq_movimientos_folio        | UNIQUE | UNIQUE (folio)                                                                                                 
+ producto_proveedor | ck_pp_costo                 | CHECK  | CHECK ((costo &gt;= (0)::numeric))                                                                                
+ producto_proveedor | ck_pp_dias                  | CHECK  | CHECK ((dias_entrega &gt;= 0))                                                                                    
+ productos          | ck_productos_pcompra        | CHECK  | CHECK ((precio_compra &gt;= (0)::numeric))                                                                        
+ productos          | ck_productos_pventa         | CHECK  | CHECK ((precio_venta &gt;= (0)::numeric))                                                                         
+ productos          | ck_productos_rango_stock    | CHECK  | CHECK (((stock_maximo = 0) OR (stock_maximo &gt;= stock_minimo)))                                                 
+ productos          | ck_productos_smax           | CHECK  | CHECK ((stock_maximo &gt;= 0))                                                                                    
+ productos          | ck_productos_smin           | CHECK  | CHECK ((stock_minimo &gt;= 0))                                                                                    
+ productos          | productos_sku_key           | UNIQUE | UNIQUE (sku)                                                                                                   
+ proveedores        | ck_proveedores_rfc          | CHECK  | CHECK ((char_length((rfc)::text) = ANY (ARRAY[12, 13])))                                                       
+ proveedores        | proveedores_rfc_key         | UNIQUE | UNIQUE (rfc)                                                                                                   
+ tipos_movimiento   | ck_tipos_naturaleza         | CHECK  | CHECK (((naturaleza)::text = ANY ((ARRAY['ENTRADA'::character varying, 'SALIDA'::character varying])::text[])))
+ tipos_movimiento   | tipos_movimiento_nombre_key | UNIQUE | UNIQUE (nombre)                                                                                                
+ usuarios           | ck_usuarios_rol             | CHECK  | CHECK (((rol)::text = ANY ((ARRAY['admin'::character varying, 'usuario'::character varying])::text[])))        
+ usuarios           | usuarios_correo_key         | UNIQUE | UNIQUE (correo)                                                                                                
+(22 filas)</pre>
+      </div>
+      <div class="bloque">
+        <h4>2.5 Tipos de datos de la tabla movimientos <span class="usuario">nexo_inventario_owner</span></h4>
+        <pre class="sql" style="font-size:6.64pt"><span class="k">SELECT</span> column_name <span class="k">AS</span> columna,
+       <span class="k">CASE</span> <span class="k">WHEN</span> data_type = <span class="s">'character varying'</span> <span class="k">THEN</span> <span class="s">'varchar('</span> || character_maximum_length || <span class="s">')'</span>
+            <span class="k">WHEN</span> data_type = <span class="s">'numeric'</span> <span class="k">THEN</span> <span class="s">'numeric('</span> || numeric_precision || <span class="s">','</span> || numeric_scale || <span class="s">')'</span>
+            <span class="k">ELSE</span> data_type <span class="k">END</span> <span class="k">AS</span> tipo,
+       is_nullable <span class="k">AS</span> nulo,
+       <span class="k">COALESCE</span>(column_default, <span class="k">CASE</span> <span class="k">WHEN</span> is_identity = <span class="s">'YES'</span> <span class="k">THEN</span> <span class="s">'IDENTITY'</span> <span class="k">END</span>,
+                <span class="k">CASE</span> <span class="k">WHEN</span> is_generated = <span class="s">'ALWAYS'</span> <span class="k">THEN</span> <span class="s">'GENERADA: '</span> || generation_expression <span class="k">END</span>) <span class="k">AS</span> valor_por_defecto
+<span class="k">FROM</span> information_schema.columns
+<span class="k">WHERE</span> table_schema = <span class="s">'public'</span> <span class="k">AND</span> table_name = <span class="s">'movimientos'</span>
+<span class="k">ORDER</span> <span class="k">BY</span> ordinal_position;</pre><pre class="consola " style="font-size:6.07pt">        columna        |           tipo           | nulo |                           valor_por_defecto                          
+-----------------------+--------------------------+------+-----------------------------------------------------------------------
+ id_movimiento         | integer                  | NO   | IDENTITY                                                             
+ folio                 | varchar(12)              | YES  | GENERADA: ('MOV-'::text || lpad((id_movimiento)::text, 6, '0'::text))
+ id_tipo               | smallint                 | NO   |                                                                      
+ id_producto           | integer                  | NO   |                                                                      
+ id_almacen            | smallint                 | NO   |                                                                      
+ id_proveedor          | integer                  | YES  |                                                                      
+ id_usuario            | integer                  | NO   |                                                                      
+ cantidad              | integer                  | NO   |                                                                      
+ costo_unitario        | numeric(12,2)            | NO   | 0                                                                    
+ existencia_resultante | integer                  | NO   |                                                                      
+ referencia            | varchar(60)              | YES  |                                                                      
+ observaciones         | varchar(255)             | YES  |                                                                      
+ fecha                 | timestamp with time zone | NO   | now()                                                                
+(13 filas)</pre>
+      </div>
+    
+  </div>
+  <div class="evidencia">
+    <h3 class="evidencia-titulo"><span>Evidencia 3</span> Roles developer y &quot;user&quot;</h3>
+    
+    
+    
+      <div class="bloque">
+        <h4>3.1 Atributos de los roles <span class="usuario">nexo_inventario_owner</span></h4>
+        <pre class="sql" style="font-size:8.00pt"><span class="k">SELECT</span> rolname <span class="k">AS</span> rol, rolcanlogin <span class="k">AS</span> <span class="k">login</span>, rolinherit <span class="k">AS</span> hereda,
+       rolcreatedb <span class="k">AS</span> crea_bd, rolcreaterole <span class="k">AS</span> crea_roles, rolsuper <span class="k">AS</span> superusuario,
+       shobj_description(oid, <span class="s">'pg_authid'</span>) <span class="k">AS</span> descripcion
+<span class="k">FROM</span> pg_roles
+<span class="k">WHERE</span> rolname <span class="k">IN</span> (<span class="s">'developer'</span>, <span class="s">'user'</span>)
+<span class="k">ORDER</span> <span class="k">BY</span> rolname;</pre><pre class="consola " style="font-size:6.17pt">    rol    | login | hereda | crea_bd | crea_roles | superusuario |                        descripcion                        
+-----------+-------+--------+---------+------------+--------------+------------------------------------------------------------
+ developer | t     | t      | f       | f          | f            | Equipo de desarrollo: CRUD + creación de objetos en public
+ user      | t     | t      | f       | f          | f            | Usuarios operativos: CRUD sin creación de objetos         
+(2 filas)</pre>
+      </div>
+      <div class="bloque">
+        <h4>3.2 Permisos sobre la base de datos y el esquema public <span class="usuario">nexo_inventario_owner</span></h4>
+        <pre class="sql" style="font-size:8.00pt"><span class="k">SELECT</span> r <span class="k">AS</span> rol,
+       has_database_privilege(r, current_database(), <span class="s">'CONNECT'</span>)   <span class="k">AS</span> conectar,
+       has_database_privilege(r, current_database(), <span class="s">'TEMPORARY'</span>) <span class="k">AS</span> temporales,
+       has_database_privilege(r, current_database(), <span class="s">'CREATE'</span>)    <span class="k">AS</span> crear_esquemas,
+       has_schema_privilege(r, <span class="s">'public'</span>, <span class="s">'USAGE'</span>)  <span class="k">AS</span> usar_public,
+       has_schema_privilege(r, <span class="s">'public'</span>, <span class="s">'CREATE'</span>) <span class="k">AS</span> crear_en_public
+<span class="k">FROM</span> unnest(ARRAY[<span class="s">'developer'</span>, <span class="s">'user'</span>]) <span class="k">AS</span> r;</pre><pre class="consola " style="font-size:8.00pt">    rol    | conectar | temporales | crear_esquemas | usar_public | crear_en_public
+-----------+----------+------------+----------------+-------------+-----------------
+ developer | t        | t          | f              | t           | t              
+ user      | t        | f          | f              | t           | f              
+(2 filas)</pre>
+      </div>
+      <div class="bloque">
+        <h4>3.3 Permisos CRUD en tablas existentes <span class="usuario">nexo_inventario_owner</span></h4>
+        <pre class="sql" style="font-size:8.00pt"><span class="k">SELECT</span> grantee <span class="k">AS</span> rol,
+       table_name <span class="k">AS</span> tabla,
+       string_agg(privilege_type, <span class="s">', '</span> <span class="k">ORDER</span> <span class="k">BY</span> privilege_type) <span class="k">AS</span> privilegios
+<span class="k">FROM</span> information_schema.role_table_grants
+<span class="k">WHERE</span> table_schema = <span class="s">'public'</span> <span class="k">AND</span> grantee <span class="k">IN</span> (<span class="s">'developer'</span>, <span class="s">'user'</span>)
+<span class="k">GROUP</span> <span class="k">BY</span> grantee, table_name
+<span class="k">ORDER</span> <span class="k">BY</span> grantee, table_name;</pre><pre class="consola " style="font-size:8.00pt">    rol    |         tabla          |          privilegios          
+-----------+------------------------+--------------------------------
+ developer | almacenes              | DELETE, INSERT, SELECT, UPDATE
+ developer | bitacora               | DELETE, INSERT, SELECT, UPDATE
+ developer | categorias             | DELETE, INSERT, SELECT, UPDATE
+ developer | inventario             | DELETE, INSERT, SELECT, UPDATE
+ developer | movimientos            | DELETE, INSERT, SELECT, UPDATE
+ developer | producto_proveedor     | DELETE, INSERT, SELECT, UPDATE
+ developer | productos              | DELETE, INSERT, SELECT, UPDATE
+ developer | proveedores            | DELETE, INSERT, SELECT, UPDATE
+ developer | tipos_movimiento       | DELETE, INSERT, SELECT, UPDATE
+ developer | usuarios               | DELETE, INSERT, SELECT, UPDATE
+ developer | vw_estado_inventario   | DELETE, INSERT, SELECT, UPDATE
+ developer | vw_movimientos_diarios | DELETE, INSERT, SELECT, UPDATE
+ user      | almacenes              | DELETE, INSERT, SELECT, UPDATE
+ user      | bitacora               | DELETE, INSERT, SELECT, UPDATE
+ user      | categorias             | DELETE, INSERT, SELECT, UPDATE
+ user      | inventario             | DELETE, INSERT, SELECT, UPDATE
+ user      | movimientos            | DELETE, INSERT, SELECT, UPDATE
+ user      | producto_proveedor     | DELETE, INSERT, SELECT, UPDATE
+ user      | productos              | DELETE, INSERT, SELECT, UPDATE
+ user      | proveedores            | DELETE, INSERT, SELECT, UPDATE
+ user      | tipos_movimiento       | DELETE, INSERT, SELECT, UPDATE
+ user      | usuarios               | DELETE, INSERT, SELECT, UPDATE
+ user      | vw_estado_inventario   | DELETE, INSERT, SELECT, UPDATE
+ user      | vw_movimientos_diarios | DELETE, INSERT, SELECT, UPDATE
+(24 filas)</pre>
+      </div>
+      <div class="bloque">
+        <h4>3.4 Permisos por defecto para tablas, secuencias y funciones FUTURAS <span class="usuario">nexo_inventario_owner</span></h4>
+        <pre class="sql" style="font-size:6.58pt"><span class="k">SELECT</span> pg_get_userbyid(d.defaclrole) <span class="k">AS</span> cuando_crea,
+       <span class="k">CASE</span> d.defaclobjtype <span class="k">WHEN</span> <span class="s">'r'</span> <span class="k">THEN</span> <span class="s">'tablas'</span> <span class="k">WHEN</span> <span class="s">'S'</span> <span class="k">THEN</span> <span class="s">'secuencias'</span> <span class="k">WHEN</span> <span class="s">'f'</span> <span class="k">THEN</span> <span class="s">'funciones'</span> <span class="k">END</span> <span class="k">AS</span> objetos,
+       a.grantee::regrole <span class="k">AS</span> se_otorga_a,
+       string_agg(a.privilege_type, <span class="s">', '</span> <span class="k">ORDER</span> <span class="k">BY</span> a.privilege_type) <span class="k">AS</span> privilegios
+<span class="k">FROM</span> pg_default_acl d
+<span class="k">CROSS</span> <span class="k">JOIN</span> <span class="k">LATERAL</span> aclexplode(d.defaclacl) a
+<span class="k">WHERE</span> pg_get_userbyid(d.defaclrole) <span class="k">IN</span> (<span class="s">'nexo_inventario_owner'</span>, <span class="s">'developer'</span>)
+<span class="k">GROUP</span> <span class="k">BY</span> 1, 2, 3
+<span class="k">ORDER</span> <span class="k">BY</span> 1, 2, 3;</pre><pre class="consola " style="font-size:8.00pt">      cuando_crea      |  objetos   | se_otorga_a |          privilegios          
+-----------------------+------------+-------------+--------------------------------
+ developer             | funciones  | developer   | EXECUTE                       
+ developer             | funciones  | &quot;user&quot;      | EXECUTE                       
+ developer             | secuencias | developer   | SELECT, UPDATE, USAGE         
+ developer             | secuencias | &quot;user&quot;      | SELECT, USAGE                 
+ developer             | tablas     | developer   | DELETE, INSERT, SELECT, UPDATE
+ developer             | tablas     | &quot;user&quot;      | DELETE, INSERT, SELECT, UPDATE
+ nexo_inventario_owner | funciones  | developer   | EXECUTE                       
+ nexo_inventario_owner | funciones  | &quot;user&quot;      | EXECUTE                       
+ nexo_inventario_owner | secuencias | developer   | SELECT, UPDATE, USAGE         
+ nexo_inventario_owner | secuencias | &quot;user&quot;      | SELECT, USAGE                 
+ nexo_inventario_owner | tablas     | developer   | DELETE, INSERT, SELECT, UPDATE
+ nexo_inventario_owner | tablas     | &quot;user&quot;      | DELETE, INSERT, SELECT, UPDATE
+(12 filas)</pre>
+      </div>
+    
+  </div>
+  <div class="evidencia">
+    <h3 class="evidencia-titulo"><span>Evidencia 4</span> Usuarios y asignación de roles</h3>
+    
+    
+    
+      <div class="bloque">
+        <h4>4.1 Usuarios creados y rol asignado <span class="usuario">nexo_inventario_owner</span></h4>
+        <pre class="sql" style="font-size:8.00pt"><span class="k">SELECT</span> u.rolname <span class="k">AS</span> usuario, u.rolcanlogin <span class="k">AS</span> <span class="k">login</span>,
+       g.rolname <span class="k">AS</span> rol_asignado,
+       m.inherit_option <span class="k">AS</span> hereda_permisos, m.set_option <span class="k">AS</span> puede_set_role,
+       (<span class="k">SELECT</span> string_agg(s, <span class="s">', '</span>) <span class="k">FROM</span> unnest(u.rolconfig) s) <span class="k">AS</span> configuracion,
+       shobj_description(u.oid, <span class="s">'pg_authid'</span>) <span class="k">AS</span> descripcion
+<span class="k">FROM</span> pg_auth_members m
+<span class="k">JOIN</span> pg_roles u <span class="k">ON</span> u.oid = m.member
+<span class="k">JOIN</span> pg_roles g <span class="k">ON</span> g.oid = m.roleid
+<span class="k">WHERE</span> g.rolname <span class="k">IN</span> (<span class="s">'developer'</span>, <span class="s">'user'</span>) <span class="k">AND</span> u.rolname &lt;&gt; <span class="s">'nexo_inventario_owner'</span>
+<span class="k">ORDER</span> <span class="k">BY</span> g.rolname, u.rolname;</pre><pre class="consola " style="font-size:5.33pt">  usuario   | login | rol_asignado | hereda_permisos | puede_set_role | configuracion  |                        descripcion                       
+------------+-------+--------------+-----------------+----------------+----------------+-----------------------------------------------------------
+ dev_ana    | t     | developer    | t               | t              | role=developer | Desarrolladora (miembro de developer)                    
+ dev_luis   | t     | developer    | t               | t              | role=developer | Desarrollador (miembro de developer)                     
+ app_nexo   | t     | user         | t               | t              |                | Cuenta de servicio de la aplicación web (miembro de user)
+ usr_carlos | t     | user         | t               | t              |                | Analista de inventario (miembro de user)                 
+(4 filas)</pre>
+      </div>
+      <div class="bloque">
+        <h4>4.2 dev_ana (developer) inicia sesión y crea una tabla nueva <span class="usuario">dev_ana</span></h4>
+        <pre class="sql" style="font-size:8.00pt"><span class="k">SELECT</span> session_user <span class="k">AS</span> sesion, current_user <span class="k">AS</span> actua_como;</pre><pre class="consola " style="font-size:8.00pt"> sesion  | actua_como
+---------+------------
+ dev_ana | developer 
+(1 fila)</pre><pre class="sql" style="font-size:6.99pt"><span class="k">CREATE</span> <span class="k">TABLE</span> evidencia_developer (id SERIAL <span class="k">PRIMARY</span> <span class="k">KEY</span>, nota VARCHAR(60), creado_en TIMESTAMPTZ <span class="k">DEFAULT</span> now());</pre><pre class="consola " style="font-size:8.00pt">CREATE TABLE</pre><pre class="sql" style="font-size:8.00pt"><span class="k">INSERT</span> <span class="k">INTO</span> evidencia_developer (nota) <span class="k">VALUES</span> (<span class="s">'Tabla creada por un desarrollador'</span>) <span class="k">RETURNING</span> *;</pre><pre class="consola " style="font-size:8.00pt"> id |               nota                |       creado_en       
+----+-----------------------------------+------------------------
+  1 | Tabla creada por un desarrollador | 2026-09-30 20:55:16+00
+(1 fila)</pre>
+      </div>
+      <div class="bloque">
+        <h4>4.3 usr_carlos (&quot;user&quot;) hace CRUD en la tabla FUTURA gracias a los permisos por defecto <span class="usuario">usr_carlos</span></h4>
+        <pre class="sql" style="font-size:8.00pt"><span class="k">SELECT</span> session_user <span class="k">AS</span> sesion, current_user <span class="k">AS</span> actua_como;</pre><pre class="consola " style="font-size:8.00pt">   sesion   | actua_como
+------------+------------
+ usr_carlos | usr_carlos
+(1 fila)</pre><pre class="sql" style="font-size:8.00pt"><span class="k">INSERT</span> <span class="k">INTO</span> evidencia_developer (nota) <span class="k">VALUES</span> (<span class="s">'Insertado por usr_carlos'</span>) <span class="k">RETURNING</span> *;</pre><pre class="consola " style="font-size:8.00pt"> id |           nota           |       creado_en       
+----+--------------------------+------------------------
+  2 | Insertado por usr_carlos | 2026-09-30 20:55:16+00
+(1 fila)</pre><pre class="sql" style="font-size:7.68pt"><span class="k">UPDATE</span> evidencia_developer <span class="k">SET</span> nota = nota || <span class="s">' (editado)'</span> <span class="k">WHERE</span> nota LIKE <span class="s">'%usr_carlos%'</span> <span class="k">RETURNING</span> *;</pre><pre class="consola " style="font-size:8.00pt"> id |                nota                |       creado_en       
+----+------------------------------------+------------------------
+  2 | Insertado por usr_carlos (editado) | 2026-09-30 20:55:16+00
+(1 fila)</pre><pre class="sql" style="font-size:8.00pt"><span class="k">SELECT</span> * <span class="k">FROM</span> evidencia_developer <span class="k">ORDER</span> <span class="k">BY</span> id;</pre><pre class="consola " style="font-size:8.00pt"> id |                nota                |       creado_en       
+----+------------------------------------+------------------------
+  1 | Tabla creada por un desarrollador  | 2026-09-30 20:55:16+00
+  2 | Insertado por usr_carlos (editado) | 2026-09-30 20:55:16+00
+(2 filas)</pre><pre class="sql" style="font-size:8.00pt"><span class="k">DELETE</span> <span class="k">FROM</span> evidencia_developer <span class="k">WHERE</span> nota LIKE <span class="s">'%usr_carlos%'</span> <span class="k">RETURNING</span> id;</pre><pre class="consola " style="font-size:8.00pt"> id
+----
+  2
+(1 fila)</pre>
+      </div>
+      <div class="bloque">
+        <h4>4.4 usr_carlos (&quot;user&quot;) NO puede crear objetos <span class="usuario">usr_carlos</span></h4>
+        <pre class="sql" style="font-size:8.00pt"><span class="k">CREATE</span> <span class="k">TABLE</span> intento_usuario (id INTEGER);</pre><pre class="consola esperado" style="font-size:8.00pt">ERROR:  permission denied for schema public
+SQLSTATE: 42501</pre><p class="esperado">✔ Error esperado: el permiso / la validación funciona.</p><pre class="sql" style="font-size:8.00pt"><span class="k">CREATE</span> <span class="k">VIEW</span> vw_intento <span class="k">AS</span> <span class="k">SELECT</span> 1 <span class="k">AS</span> x;</pre><pre class="consola esperado" style="font-size:8.00pt">ERROR:  permission denied for schema public
+SQLSTATE: 42501</pre><p class="esperado">✔ Error esperado: el permiso / la validación funciona.</p><pre class="sql" style="font-size:8.00pt"><span class="k">CREATE</span> <span class="k">TEMP</span> <span class="k">TABLE</span> intento_temporal (id INTEGER);</pre><pre class="consola esperado" style="font-size:8.00pt">ERROR:  permission denied to create temporary tables in database &quot;nexo_inventario&quot;
+SQLSTATE: 42501</pre><p class="esperado">✔ Error esperado: el permiso / la validación funciona.</p><pre class="sql" style="font-size:8.00pt"><span class="k">DROP</span> <span class="k">TABLE</span> evidencia_developer;</pre><pre class="consola esperado" style="font-size:8.00pt">ERROR:  must be owner of table evidencia_developer
+SQLSTATE: 42501</pre><p class="esperado">✔ Error esperado: el permiso / la validación funciona.</p>
+      </div>
+      <div class="bloque">
+        <h4>4.5 usr_carlos (&quot;user&quot;) hace CRUD en una tabla existente <span class="usuario">usr_carlos</span></h4>
+        <pre class="sql" style="font-size:6.00pt"><span class="k">INSERT</span> <span class="k">INTO</span> categorias (nombre, descripcion, color) <span class="k">VALUES</span> (<span class="s">'Evidencia CRUD'</span>, <span class="s">'Registro temporal'</span>, <span class="s">'#123456'</span>) <span class="k">RETURNING</span> id_categoria, nombre;</pre><pre class="consola " style="font-size:8.00pt"> id_categoria |     nombre    
+--------------+----------------
+            9 | Evidencia CRUD
+(1 fila)</pre><pre class="sql" style="font-size:6.00pt"><span class="k">UPDATE</span> categorias <span class="k">SET</span> descripcion = <span class="s">'Registro temporal (actualizado)'</span> <span class="k">WHERE</span> nombre = <span class="s">'Evidencia CRUD'</span> <span class="k">RETURNING</span> id_categoria, descripcion;</pre><pre class="consola " style="font-size:8.00pt"> id_categoria |           descripcion          
+--------------+---------------------------------
+            9 | Registro temporal (actualizado)
+(1 fila)</pre><pre class="sql" style="font-size:8.00pt"><span class="k">SELECT</span> id_categoria, nombre, descripcion <span class="k">FROM</span> categorias <span class="k">WHERE</span> nombre = <span class="s">'Evidencia CRUD'</span>;</pre><pre class="consola " style="font-size:8.00pt"> id_categoria |     nombre     |           descripcion          
+--------------+----------------+---------------------------------
+            9 | Evidencia CRUD | Registro temporal (actualizado)
+(1 fila)</pre><pre class="sql" style="font-size:8.00pt"><span class="k">DELETE</span> <span class="k">FROM</span> categorias <span class="k">WHERE</span> nombre = <span class="s">'Evidencia CRUD'</span> <span class="k">RETURNING</span> id_categoria;</pre><pre class="consola " style="font-size:8.00pt"> id_categoria
+--------------
+            9
+(1 fila)</pre>
+      </div>
+      <div class="bloque">
+        <h4>4.6 dev_ana elimina su tabla de prueba <span class="usuario">dev_ana</span></h4>
+        <pre class="sql" style="font-size:8.00pt"><span class="k">DROP</span> <span class="k">TABLE</span> evidencia_developer;</pre><pre class="consola " style="font-size:8.00pt">DROP TABLE</pre>
+      </div>
+    <figure class="alta"><img src="../capturas/15-admin-base-datos.png" alt="Figura. Página &quot;Base de datos&quot; de la aplicación: roles, permisos por tabla, privilegios por defecto y la prueba en vivo de CREATE TABLE con la conexión de la app (rechazada con SQLSTATE 42501)."><figcaption>Figura. Página &quot;Base de datos&quot; de la aplicación: roles, permisos por tabla, privilegios por defecto y la prueba en vivo de CREATE TABLE con la conexión de la app (rechazada con SQLSTATE 42501).</figcaption></figure>
+      <figure class=""><img src="../capturas/18-usuario-sin-acceso.png" alt="Figura. Además de los roles de BD, la aplicación tiene su propio rol: un usuario operativo no puede entrar a la sección de administración."><figcaption>Figura. Además de los roles de BD, la aplicación tiene su propio rol: un usuario operativo no puede entrar a la sección de administración.</figcaption></figure>
+  </div>
+  <div class="evidencia">
+    <h3 class="evidencia-titulo"><span>Evidencia 5</span> Vistas con CTEs</h3>
+    
+    
+    
+      <div class="bloque">
+        <h4>5.1 Vistas creadas <span class="usuario">nexo_inventario_owner</span></h4>
+        <pre class="sql" style="font-size:8.00pt"><span class="k">SELECT</span> viewname <span class="k">AS</span> vista, viewowner <span class="k">AS</span> propietario,
+       obj_description(format(<span class="s">'%I'</span>, viewname)::regclass, <span class="s">'pg_class'</span>) <span class="k">AS</span> descripcion
+<span class="k">FROM</span> pg_views <span class="k">WHERE</span> schemaname = <span class="s">'public'</span> <span class="k">ORDER</span> <span class="k">BY</span> viewname;</pre><pre class="consola " style="font-size:5.85pt">         vista          |      propietario      |                                     descripcion                                    
+------------------------+-----------------------+-------------------------------------------------------------------------------------
+ vw_estado_inventario   | nexo_inventario_owner | Existencia total, valor, rotación 30 días, cobertura y semáforo por producto (CTEs)
+ vw_movimientos_diarios | nexo_inventario_owner | Entradas y salidas por día de los últimos 30 días, con días vacíos en cero (CTEs)  
+(2 filas)</pre>
+      </div>
+      <div class="bloque">
+        <h4>5.2 vw_estado_inventario · productos que requieren atención <span class="usuario">usr_carlos</span></h4>
+        <pre class="sql" style="font-size:8.00pt"><span class="k">SELECT</span> sku, nombre, categoria, existencia_total <span class="k">AS</span> existencia, stock_minimo <span class="k">AS</span> minimo,
+       valor_inventario <span class="k">AS</span> valor, salidas_30d, dias_cobertura <span class="k">AS</span> cobertura_dias, estado
+<span class="k">FROM</span> vw_estado_inventario
+<span class="k">WHERE</span> estado &lt;&gt; <span class="s">'NORMAL'</span>
+<span class="k">ORDER</span> <span class="k">BY</span> <span class="k">CASE</span> estado <span class="k">WHEN</span> <span class="s">'SIN STOCK'</span> <span class="k">THEN</span> 0 <span class="k">WHEN</span> <span class="s">'BAJO'</span> <span class="k">THEN</span> 1 <span class="k">ELSE</span> 2 <span class="k">END</span>, nombre;</pre><pre class="consola " style="font-size:5.29pt">     sku     |                 nombre                  |   categoria    | existencia | minimo |  valor   | salidas_30d | cobertura_dias |  estado  
+-------------+-----------------------------------------+----------------+------------+--------+----------+-------------+----------------+-----------
+ MOB-ARC-001 | Archivero metálico 4 gavetas            | Mobiliario     |          0 |      2 |     0.00 |          13 |            0.0 | SIN STOCK
+ COM-LAP-002 | Laptop HP ProBook 450 G10 i5 16GB 512GB | Cómputo        |          0 |      4 |     0.00 |           6 |            0.0 | SIN STOCK
+ COM-LAP-003 | MacBook Air 13&quot; M3 8GB 256GB            | Cómputo        |          0 |      2 |     0.00 |          10 |            0.0 | SIN STOCK
+ RED-AP-001  | Access Point Ubiquiti UniFi U6 Lite     | Redes          |          4 |      4 |  9800.00 |          11 |           10.9 | BAJO     
+ PER-DIA-001 | Diadema Jabra Evolve2 30 USB-C          | Periféricos    |          8 |     10 |  9200.00 |          19 |           12.6 | BAJO     
+ ALM-HDD-001 | Disco externo Seagate 2TB USB 3.0       | Almacenamiento |          4 |      8 |  5000.00 |          22 |            5.5 | BAJO     
+ PAP-ENG-001 | Engrapadora Pilot metálica              | Papelería      |          5 |     15 |   575.00 |           8 |           18.7 | BAJO     
+ MOB-ESC-001 | Escritorio en L 150 cm                  | Mobiliario     |          1 |      2 |  3100.00 |           6 |            5.0 | BAJO     
+ ENE-MUL-001 | Multicontacto con supresor 6 salidas    | Energía        |          2 |     20 |   420.00 |          20 |            3.0 | BAJO     
+ ALM-SSD-001 | SSD Kingston NV2 1TB NVMe               | Almacenamiento |         10 |     12 |  9500.00 |          42 |            7.1 | BAJO     
+ IMP-TON-001 | Tóner HP 58A negro                      | Impresión      |          8 |     10 | 13200.00 |          17 |           14.1 | BAJO     
+ PAP-BOL-001 | Bolígrafo BIC Cristal azul (caja 12)    | Papelería      |        236 |     40 | 11328.00 |          87 |           81.4 | EXCESO   
+ PER-TEC-001 | Teclado Logitech K120 USB español       | Periféricos    |        166 |     30 | 27390.00 |          46 |          108.3 | EXCESO   
+(13 filas)</pre>
+      </div>
+      <div class="bloque">
+        <h4>5.3 vw_movimientos_diarios · últimos 10 días <span class="usuario">usr_carlos</span></h4>
+        <pre class="sql" style="font-size:8.00pt"><span class="k">SELECT</span> dia, movimientos, unidades_entrada, unidades_salida, importe_entrada, importe_salida
+<span class="k">FROM</span> vw_movimientos_diarios
+<span class="k">ORDER</span> <span class="k">BY</span> dia DESC
+<span class="k">LIMIT</span> 10;</pre><pre class="consola " style="font-size:7.99pt">    dia     | movimientos | unidades_entrada | unidades_salida | importe_entrada | importe_salida
+------------+-------------+------------------+-----------------+-----------------+----------------
+ 2026-09-30 |          14 |              318 |              80 |        43046.00 |      216190.00
+ 2026-09-29 |           9 |               33 |              22 |        42520.00 |       17473.00
+ 2026-09-28 |          10 |               15 |               4 |       136566.00 |        4270.00
+ 2026-09-27 |           4 |                4 |               9 |        11200.00 |       38650.00
+ 2026-09-26 |           4 |               18 |               4 |        70200.00 |       45000.00
+ 2026-09-25 |           5 |               52 |               8 |        56200.00 |       33700.00
+ 2026-09-24 |           7 |                5 |              24 |        11250.00 |       48710.00
+ 2026-09-23 |           8 |               21 |              16 |        42850.00 |        8035.00
+ 2026-09-22 |           5 |               16 |               7 |         2320.00 |        8485.00
+ 2026-09-21 |           9 |               75 |              27 |        24680.00 |       35820.00
+(10 filas)</pre>
+      </div>
+    
+  </div>
+  <div class="evidencia">
+    <h3 class="evidencia-titulo"><span>Evidencia 6</span> Funciones</h3>
+    
+    
+    
+      <div class="bloque">
+        <h4>6.1 Funciones creadas <span class="usuario">nexo_inventario_owner</span></h4>
+        <pre class="sql" style="font-size:7.19pt"><span class="k">SELECT</span> p.proname <span class="k">AS</span> funcion,
+       p.pronargs <span class="k">AS</span> parametros,
+       p.pronargdefaults <span class="k">AS</span> con_valor_por_defecto,
+       pg_get_function_result(p.oid) <span class="k">AS</span> retorna,
+       l.lanname <span class="k">AS</span> lenguaje,
+       <span class="k">CASE</span> p.provolatile <span class="k">WHEN</span> <span class="s">'s'</span> <span class="k">THEN</span> <span class="s">'STABLE'</span> <span class="k">WHEN</span> <span class="s">'i'</span> <span class="k">THEN</span> <span class="s">'IMMUTABLE'</span> <span class="k">ELSE</span> <span class="s">'VOLATILE'</span> <span class="k">END</span> <span class="k">AS</span> volatilidad
+<span class="k">FROM</span> pg_proc p <span class="k">JOIN</span> pg_language l <span class="k">ON</span> l.oid = p.prolang
+<span class="k">WHERE</span> p.pronamespace = <span class="s">'public'</span>::regnamespace
+<span class="k">ORDER</span> <span class="k">BY</span> p.proname;</pre><pre class="consola " style="font-size:8.00pt">         funcion         | parametros | con_valor_por_defecto | retorna | lenguaje | volatilidad
+-------------------------+------------+-----------------------+---------+----------+-------------
+ fn_registrar_movimiento |         10 |                     5 | integer | plpgsql  | VOLATILE   
+ fn_valor_inventario     |          2 |                     2 | numeric | sql      | STABLE     
+(2 filas)</pre><pre class="sql" style="font-size:7.61pt"><span class="k">SELECT</span> p.proname <span class="k">AS</span> funcion, a.n, a.parametro, format_type(a.tipo, <span class="k">NULL</span>) <span class="k">AS</span> tipo
+<span class="k">FROM</span> pg_proc p
+<span class="k">CROSS</span> <span class="k">JOIN</span> <span class="k">LATERAL</span> unnest(p.proargnames, p.proargtypes::oid[]) <span class="k">WITH</span> ORDINALITY <span class="k">AS</span> a(parametro, tipo, n)
+<span class="k">WHERE</span> p.pronamespace = <span class="s">'public'</span>::regnamespace
+<span class="k">ORDER</span> <span class="k">BY</span> p.proname, a.n;</pre><pre class="consola " style="font-size:8.00pt">         funcion         | n  |    parametro     |           tipo          
+-------------------------+----+------------------+--------------------------
+ fn_registrar_movimiento |  1 | p_id_producto    | integer                 
+ fn_registrar_movimiento |  2 | p_id_almacen     | integer                 
+ fn_registrar_movimiento |  3 | p_id_tipo        | integer                 
+ fn_registrar_movimiento |  4 | p_cantidad       | integer                 
+ fn_registrar_movimiento |  5 | p_id_usuario     | integer                 
+ fn_registrar_movimiento |  6 | p_costo_unitario | numeric                 
+ fn_registrar_movimiento |  7 | p_id_proveedor   | integer                 
+ fn_registrar_movimiento |  8 | p_referencia     | character varying       
+ fn_registrar_movimiento |  9 | p_observaciones  | character varying       
+ fn_registrar_movimiento | 10 | p_fecha          | timestamp with time zone
+ fn_valor_inventario     |  1 | p_id_categoria   | integer                 
+ fn_valor_inventario     |  2 | p_id_almacen     | integer                 
+(12 filas)</pre>
+      </div>
+      <div class="bloque">
+        <h4>6.2 fn_valor_inventario · cálculo total, por almacén y por categoría <span class="usuario">usr_carlos</span></h4>
+        <pre class="sql" style="font-size:8.00pt"><span class="k">SELECT</span> <span class="s">'Toda la empresa'</span> <span class="k">AS</span> alcance, fn_valor_inventario() <span class="k">AS</span> valor
+<span class="k">UNION</span> <span class="k">ALL</span>
+<span class="k">SELECT</span> <span class="s">'Almacén: '</span> || nombre, fn_valor_inventario(<span class="k">NULL</span>, id_almacen) <span class="k">FROM</span> almacenes
+<span class="k">UNION</span> <span class="k">ALL</span>
+<span class="k">SELECT</span> <span class="s">'Categoría: '</span> || nombre, fn_valor_inventario(id_categoria) <span class="k">FROM</span> categorias
+<span class="k">ORDER</span> <span class="k">BY</span> valor DESC;</pre><pre class="consola " style="font-size:8.00pt">              alcance               |   valor  
+------------------------------------+-----------
+ Toda la empresa                    | 893088.00
+ Almacén: Almacén Central Monterrey | 650270.00
+ Categoría: Cómputo                 | 348600.00
+ Categoría: Periféricos             | 206760.00
+ Almacén: Sucursal Guadalajara      | 140280.00
+ Almacén: Sucursal Saltillo         | 102538.00
+ Categoría: Impresión               |  84650.00
+ Categoría: Redes                   |  83640.00
+ Categoría: Papelería               |  53858.00
+ Categoría: Energía                 |  44830.00
+ Categoría: Almacenamiento          |  39450.00
+ Categoría: Mobiliario              |  31300.00
+(12 filas)</pre>
+      </div>
+      <div class="bloque">
+        <h4>6.3 fn_registrar_movimiento · compra a proveedor (entrada) <span class="usuario">usr_carlos</span></h4>
+        <pre class="sql" style="font-size:7.99pt"><span class="k">SELECT</span> existencia <span class="k">AS</span> existencia_antes <span class="k">FROM</span> inventario
+<span class="k">WHERE</span> id_producto = (<span class="k">SELECT</span> id_producto <span class="k">FROM</span> productos <span class="k">WHERE</span> sku = <span class="s">'PER-DIA-001'</span>)
+  <span class="k">AND</span> id_almacen  = (<span class="k">SELECT</span> id_almacen <span class="k">FROM</span> almacenes <span class="k">WHERE</span> nombre = <span class="s">'Almacén Central Monterrey'</span>);</pre><pre class="consola " style="font-size:8.00pt"> existencia_antes
+------------------
+                0
+(1 fila)</pre><pre class="sql" style="font-size:8.00pt"><span class="k">SELECT</span> fn_registrar_movimiento(
+         (<span class="k">SELECT</span> id_producto <span class="k">FROM</span> productos <span class="k">WHERE</span> sku = <span class="s">'PER-DIA-001'</span>),
+         (<span class="k">SELECT</span> id_almacen <span class="k">FROM</span> almacenes <span class="k">WHERE</span> nombre = <span class="s">'Almacén Central Monterrey'</span>),
+         (<span class="k">SELECT</span> id_tipo <span class="k">FROM</span> tipos_movimiento <span class="k">WHERE</span> nombre = <span class="s">'Compra a proveedor'</span>),
+         20,
+         (<span class="k">SELECT</span> id_usuario <span class="k">FROM</span> usuarios <span class="k">WHERE</span> correo = <span class="s">'sofia.villarreal@nexo.mx'</span>),
+         1150.00,
+         (<span class="k">SELECT</span> id_proveedor <span class="k">FROM</span> proveedores <span class="k">WHERE</span> rfc = <span class="s">'MDM180725K91'</span>),
+         <span class="s">'OC-EVIDENCIA-01'</span>,
+         <span class="s">'Evidencia 6: entrada registrada con la función'</span>) <span class="k">AS</span> id_movimiento;</pre><pre class="consola " style="font-size:8.00pt"> id_movimiento
+---------------
+           504
+(1 fila)</pre><pre class="sql" style="font-size:8.00pt"><span class="k">SELECT</span> folio, cantidad, costo_unitario, existencia_resultante, referencia
+<span class="k">FROM</span> movimientos <span class="k">ORDER</span> <span class="k">BY</span> id_movimiento DESC <span class="k">LIMIT</span> 1;</pre><pre class="consola " style="font-size:8.00pt">   folio    | cantidad | costo_unitario | existencia_resultante |   referencia   
+------------+----------+----------------+-----------------------+-----------------
+ MOV-000504 |       20 |        1150.00 |                    20 | OC-EVIDENCIA-01
+(1 fila)</pre>
+      </div>
+      <div class="bloque">
+        <h4>6.4 fn_registrar_movimiento · venta (salida) <span class="usuario">usr_carlos</span></h4>
+        <pre class="sql" style="font-size:8.00pt"><span class="k">SELECT</span> fn_registrar_movimiento(
+         (<span class="k">SELECT</span> id_producto <span class="k">FROM</span> productos <span class="k">WHERE</span> sku = <span class="s">'PER-DIA-001'</span>),
+         (<span class="k">SELECT</span> id_almacen <span class="k">FROM</span> almacenes <span class="k">WHERE</span> nombre = <span class="s">'Almacén Central Monterrey'</span>),
+         (<span class="k">SELECT</span> id_tipo <span class="k">FROM</span> tipos_movimiento <span class="k">WHERE</span> nombre = <span class="s">'Venta'</span>),
+         3,
+         (<span class="k">SELECT</span> id_usuario <span class="k">FROM</span> usuarios <span class="k">WHERE</span> correo = <span class="s">'jorge.salinas@nexo.mx'</span>),
+         p_referencia =&gt; <span class="s">'FAC-EVIDENCIA-01'</span>) <span class="k">AS</span> id_movimiento;</pre><pre class="consola " style="font-size:8.00pt"> id_movimiento
+---------------
+           505
+(1 fila)</pre><pre class="sql" style="font-size:8.00pt"><span class="k">SELECT</span> folio, cantidad, existencia_resultante, referencia
+<span class="k">FROM</span> movimientos <span class="k">ORDER</span> <span class="k">BY</span> id_movimiento DESC <span class="k">LIMIT</span> 1;</pre><pre class="consola " style="font-size:8.00pt">   folio    | cantidad | existencia_resultante |    referencia   
+------------+----------+-----------------------+------------------
+ MOV-000505 |        3 |                    17 | FAC-EVIDENCIA-01
+(1 fila)</pre>
+      </div>
+      <div class="bloque">
+        <h4>6.5 fn_registrar_movimiento · validaciones (deben fallar) <span class="usuario">usr_carlos</span></h4>
+        <pre class="sql" style="font-size:8.00pt"><span class="k">SELECT</span> fn_registrar_movimiento(
+         (<span class="k">SELECT</span> id_producto <span class="k">FROM</span> productos <span class="k">WHERE</span> sku = <span class="s">'MOB-ARC-001'</span>),
+         (<span class="k">SELECT</span> id_almacen <span class="k">FROM</span> almacenes <span class="k">WHERE</span> nombre = <span class="s">'Almacén Central Monterrey'</span>),
+         (<span class="k">SELECT</span> id_tipo <span class="k">FROM</span> tipos_movimiento <span class="k">WHERE</span> nombre = <span class="s">'Venta'</span>),
+         5,
+         (<span class="k">SELECT</span> id_usuario <span class="k">FROM</span> usuarios <span class="k">WHERE</span> correo = <span class="s">'jorge.salinas@nexo.mx'</span>));</pre><pre class="consola esperado" style="font-size:8.00pt">ERROR:  Existencia insuficiente: hay 0 y se solicitan 5
+SQLSTATE: P0001</pre><p class="esperado">✔ Error esperado: el permiso / la validación funciona.</p><pre class="sql" style="font-size:8.00pt"><span class="k">SELECT</span> fn_registrar_movimiento(
+         (<span class="k">SELECT</span> id_producto <span class="k">FROM</span> productos <span class="k">WHERE</span> sku = <span class="s">'PER-DIA-001'</span>),
+         (<span class="k">SELECT</span> id_almacen <span class="k">FROM</span> almacenes <span class="k">WHERE</span> nombre = <span class="s">'Almacén Central Monterrey'</span>),
+         (<span class="k">SELECT</span> id_tipo <span class="k">FROM</span> tipos_movimiento <span class="k">WHERE</span> nombre = <span class="s">'Compra a proveedor'</span>),
+         5,
+         (<span class="k">SELECT</span> id_usuario <span class="k">FROM</span> usuarios <span class="k">WHERE</span> correo = <span class="s">'jorge.salinas@nexo.mx'</span>));</pre><pre class="consola esperado" style="font-size:8.00pt">ERROR:  Este tipo de movimiento requiere indicar un proveedor
+SQLSTATE: P0001</pre><p class="esperado">✔ Error esperado: el permiso / la validación funciona.</p><pre class="sql" style="font-size:8.00pt"><span class="k">SELECT</span> fn_registrar_movimiento(1, 1, 5, 0, 1);</pre><pre class="consola esperado" style="font-size:8.00pt">ERROR:  La cantidad debe ser mayor a cero (recibido: 0)
+SQLSTATE: P0001</pre><p class="esperado">✔ Error esperado: el permiso / la validación funciona.</p>
+      </div>
+    
+  </div>
+  <div class="evidencia">
+    <h3 class="evidencia-titulo"><span>Evidencia 7</span> Uso de vistas y funciones</h3>
+    
+    
+    
+      <div class="bloque">
+        <h4>7.1 Indicadores del dashboard (vista + función), como los consulta la aplicación <span class="usuario">app_nexo</span></h4>
+        <pre class="sql" style="font-size:8.00pt"><span class="k">SELECT</span> fn_valor_inventario()                                   <span class="k">AS</span> valor_total,
+       <span class="k">COUNT</span>(*)                                                <span class="k">AS</span> productos_activos,
+       <span class="k">SUM</span>(existencia_total)                                   <span class="k">AS</span> unidades,
+       <span class="k">COUNT</span>(*) <span class="k">FILTER</span> (<span class="k">WHERE</span> estado <span class="k">IN</span> (<span class="s">'BAJO'</span>, <span class="s">'SIN STOCK'</span>)) <span class="k">AS</span> alertas
+<span class="k">FROM</span> vw_estado_inventario;</pre><pre class="consola " style="font-size:8.00pt"> valor_total | productos_activos | unidades | alertas
+-------------+-------------------+----------+---------
+   912638.00 |                37 |     1276 |      10
+(1 fila)</pre>
+      </div>
+      <div class="bloque">
+        <h4>7.2 Valor por categoría: la vista contra la función (deben coincidir) <span class="usuario">app_nexo</span></h4>
+        <pre class="sql" style="font-size:8.00pt"><span class="k">SELECT</span> v.categoria,
+       <span class="k">SUM</span>(v.valor_inventario)                <span class="k">AS</span> valor_desde_vista,
+       fn_valor_inventario(v.id_categoria)    <span class="k">AS</span> valor_desde_funcion,
+       <span class="k">SUM</span>(v.valor_inventario) = fn_valor_inventario(v.id_categoria) <span class="k">AS</span> coinciden
+<span class="k">FROM</span> vw_estado_inventario v
+<span class="k">GROUP</span> <span class="k">BY</span> v.categoria, v.id_categoria
+<span class="k">ORDER</span> <span class="k">BY</span> valor_desde_vista DESC;</pre><pre class="consola " style="font-size:8.00pt">   categoria    | valor_desde_vista | valor_desde_funcion | coinciden
+----------------+-------------------+---------------------+-----------
+ Cómputo        |         348600.00 |           348600.00 | t        
+ Periféricos    |         226310.00 |           226310.00 | t        
+ Impresión      |          84650.00 |            84650.00 | t        
+ Redes          |          83640.00 |            83640.00 | t        
+ Papelería      |          53858.00 |            53858.00 | t        
+ Energía        |          44830.00 |            44830.00 | t        
+ Almacenamiento |          39450.00 |            39450.00 | t        
+ Mobiliario     |          31300.00 |            31300.00 | t        
+(8 filas)</pre>
+      </div>
+      <div class="bloque">
+        <h4>7.3 Reabastecimiento automático: registrar compras para todo lo agotado <span class="usuario">app_nexo</span></h4>
+        <pre class="sql" style="font-size:6.53pt"><span class="k">SELECT</span> v.sku, v.nombre, v.existencia_total <span class="k">AS</span> antes,
+       fn_registrar_movimiento(
+           v.id_producto,
+           (<span class="k">SELECT</span> id_almacen <span class="k">FROM</span> almacenes <span class="k">WHERE</span> nombre = <span class="s">'Almacén Central Monterrey'</span>),
+           (<span class="k">SELECT</span> id_tipo <span class="k">FROM</span> tipos_movimiento <span class="k">WHERE</span> nombre = <span class="s">'Compra a proveedor'</span>),
+           <span class="k">GREATEST</span>(v.stock_minimo * 2, 1),
+           (<span class="k">SELECT</span> id_usuario <span class="k">FROM</span> usuarios <span class="k">WHERE</span> correo = <span class="s">'sofia.villarreal@nexo.mx'</span>),
+           <span class="k">NULL</span>,
+           (<span class="k">SELECT</span> pp.id_proveedor <span class="k">FROM</span> producto_proveedor pp <span class="k">WHERE</span> pp.id_producto = v.id_producto <span class="k">AND</span> pp.es_principal),
+           <span class="s">'OC-REABASTO-AUTO'</span>) <span class="k">AS</span> id_movimiento
+<span class="k">FROM</span> vw_estado_inventario v
+<span class="k">WHERE</span> v.estado = <span class="s">'SIN STOCK'</span>;</pre><pre class="consola " style="font-size:8.00pt">     sku     |                 nombre                  | antes | id_movimiento
+-------------+-----------------------------------------+-------+---------------
+ COM-LAP-003 | MacBook Air 13&quot; M3 8GB 256GB            |     0 |           506
+ COM-LAP-002 | Laptop HP ProBook 450 G10 i5 16GB 512GB |     0 |           507
+ MOB-ARC-001 | Archivero metálico 4 gavetas            |     0 |           508
+(3 filas)</pre>
+      </div>
+      <div class="bloque">
+        <h4>7.4 Estado después del reabastecimiento <span class="usuario">app_nexo</span></h4>
+        <pre class="sql" style="font-size:8.00pt"><span class="k">SELECT</span> estado, <span class="k">COUNT</span>(*) <span class="k">AS</span> productos, <span class="k">SUM</span>(valor_inventario) <span class="k">AS</span> valor
+<span class="k">FROM</span> vw_estado_inventario
+<span class="k">GROUP</span> <span class="k">BY</span> estado
+<span class="k">ORDER</span> <span class="k">BY</span> productos DESC;</pre><pre class="consola " style="font-size:8.00pt"> estado | productos |   valor   
+--------+-----------+------------
+ NORMAL |        28 | 1047925.00
+ BAJO   |         7 |   41595.00
+ EXCESO |         2 |   38718.00
+(3 filas)</pre>
+      </div>
+      <div class="bloque">
+        <h4>7.5 Kardex del producto reabastecido (tabla movimientos + vista) <span class="usuario">app_nexo</span></h4>
+        <pre class="sql" style="font-size:8.00pt"><span class="k">SELECT</span> m.folio, t.nombre <span class="k">AS</span> tipo, m.cantidad, m.existencia_resultante,
+       to_char(m.fecha AT TIME ZONE <span class="s">'America/Mexico_City'</span>, <span class="s">'YYYY-MM-DD HH24:MI'</span>) <span class="k">AS</span> fecha,
+       v.estado <span class="k">AS</span> estado_actual
+<span class="k">FROM</span> movimientos m
+<span class="k">JOIN</span> tipos_movimiento t <span class="k">ON</span> t.id_tipo = m.id_tipo
+<span class="k">JOIN</span> vw_estado_inventario v <span class="k">ON</span> v.id_producto = m.id_producto
+<span class="k">WHERE</span> v.sku = <span class="s">'COM-LAP-003'</span>
+<span class="k">ORDER</span> <span class="k">BY</span> m.id_movimiento DESC
+<span class="k">LIMIT</span> 6;</pre><pre class="consola " style="font-size:7.61pt">   folio    |        tipo        | cantidad | existencia_resultante |      fecha       | estado_actual
+------------+--------------------+----------+-----------------------+------------------+---------------
+ MOV-000506 | Compra a proveedor |        4 |                     4 | 2026-09-30 14:55 | NORMAL       
+ MOV-000495 | Venta              |        1 |                     0 | 2026-09-30 11:02 | NORMAL       
+ MOV-000494 | Venta              |        5 |                     0 | 2026-09-30 10:55 | NORMAL       
+ MOV-000471 | Compra a proveedor |        5 |                     5 | 2026-09-28 00:18 | NORMAL       
+ MOV-000437 | Venta              |        1 |                     0 | 2026-09-21 23:18 | NORMAL       
+ MOV-000421 | Merma / daño       |        1 |                     1 | 2026-09-19 20:59 | NORMAL       
+(6 filas)</pre>
+      </div>
+    <h3>Uso desde la aplicación web</h3>
+      <figure class="alta"><img src="../capturas/02-dashboard.png" alt="Figura. Dashboard: KPI con fn_valor_inventario(), gráfica con vw_movimientos_diarios, valor por categoría y alertas con vw_estado_inventario, valor por almacén con fn_valor_inventario(NULL, id_almacen)."><figcaption>Figura. Dashboard: KPI con fn_valor_inventario(), gráfica con vw_movimientos_diarios, valor por categoría y alertas con vw_estado_inventario, valor por almacén con fn_valor_inventario(NULL, id_almacen).</figcaption></figure>
+      <figure class=""><img src="../capturas/09-movimiento-formulario.png" alt="Figura. Registro de una venta desde la aplicación; la vista previa consulta la existencia actual."><figcaption>Figura. Registro de una venta desde la aplicación; la vista previa consulta la existencia actual.</figcaption></figure>
+      <figure class=""><img src="../capturas/10-movimiento-registrado.png" alt="Figura. El formulario llama a fn_registrar_movimiento(): se generó el folio y se actualizó la existencia."><figcaption>Figura. El formulario llama a fn_registrar_movimiento(): se generó el folio y se actualizó la existencia.</figcaption></figure>
+      <figure class=""><img src="../capturas/11-movimiento-rechazado.png" alt="Figura. La misma función rechaza una salida mayor a la existencia; la app sólo muestra el mensaje de PostgreSQL."><figcaption>Figura. La misma función rechaza una salida mayor a la existencia; la app sólo muestra el mensaje de PostgreSQL.</figcaption></figure>
+      <figure class=""><img src="../capturas/03-inventario.png" alt="Figura. Inventario consolidado leído de vw_estado_inventario con semáforo por producto."><figcaption>Figura. Inventario consolidado leído de vw_estado_inventario con semáforo por producto.</figcaption></figure>
+  </div>
+</section>
+
+<section>
+  <h2>6. Aplicación web: uso de las vistas y funciones</h2>
+  <p>La aplicación organiza el sistema en las secciones solicitadas. En cada pantalla se indica qué objeto de la base de datos la alimenta:</p>
+  <table class="tabla">
+    <tr><th>Sección</th><th>Rol de la app</th><th>Objetos de BD que utiliza</th></tr>
+    <tr><td>Dashboard</td><td>admin, usuario</td><td><code>fn_valor_inventario()</code>, <code>vw_estado_inventario</code>, <code>vw_movimientos_diarios</code></td></tr>
+    <tr><td>Inventario</td><td>admin, usuario</td><td><code>vw_estado_inventario</code>, <code>inventario</code> (exportación CSV)</td></tr>
+    <tr><td>Catálogo</td><td>admin (CRUD), usuario (consulta)</td><td><code>productos</code>, <code>producto_proveedor</code> (N:M), kardex de <code>movimientos</code></td></tr>
+    <tr><td>Categorías</td><td>admin (CRUD), usuario (consulta)</td><td><code>categorias</code>, <code>fn_valor_inventario(id_categoria)</code></td></tr>
+    <tr><td>Proveedores</td><td>admin (CRUD), usuario (consulta)</td><td><code>proveedores</code>, <code>producto_proveedor</code>, <code>movimientos</code></td></tr>
+    <tr><td>Registro de movimientos</td><td>admin, usuario</td><td><code>fn_registrar_movimiento()</code>, <code>movimientos</code></td></tr>
+    <tr><td>Administración</td><td>sólo admin</td><td><code>usuarios</code>, <code>almacenes</code> + <code>fn_valor_inventario(NULL, id)</code>, <code>tipos_movimiento</code>, <code>bitacora</code>, catálogo de PostgreSQL</td></tr>
+    <tr><td>Mi cuenta (usuario)</td><td>admin, usuario</td><td><code>usuarios</code>, <code>movimientos</code> propios, <code>bitacora</code></td></tr>
+  </table>
+  <div class="galeria">
+    <figure class=""><img src="../capturas/01-login.png" alt="Inicio de sesión"><figcaption>Inicio de sesión</figcaption></figure>
+    <figure class=""><img src="../capturas/04-catalogo.png" alt="Catálogo de productos"><figcaption>Catálogo de productos</figcaption></figure>
+    <figure class=""><img src="../capturas/05-producto-detalle.png" alt="Detalle de producto: existencias por almacén, proveedores (N:M) y kardex"><figcaption>Detalle de producto: existencias por almacén, proveedores (N:M) y kardex</figcaption></figure>
+    <figure class=""><img src="../capturas/07-proveedores.png" alt="Proveedores"><figcaption>Proveedores</figcaption></figure>
+    <figure class=""><img src="../capturas/06-categorias.png" alt="Categorías con valor calculado por la función"><figcaption>Categorías con valor calculado por la función</figcaption></figure>
+    <figure class=""><img src="../capturas/08-movimientos.png" alt="Registro (kardex) de movimientos con filtros"><figcaption>Registro (kardex) de movimientos con filtros</figcaption></figure>
+    <figure class=""><img src="../capturas/12-admin-usuarios.png" alt="Administración: usuarios del sistema"><figcaption>Administración: usuarios del sistema</figcaption></figure>
+    <figure class=""><img src="../capturas/13-admin-almacenes.png" alt="Administración: almacenes y su valor"><figcaption>Administración: almacenes y su valor</figcaption></figure>
+    <figure class=""><img src="../capturas/14-admin-bitacora.png" alt="Administración: bitácora de auditoría"><figcaption>Administración: bitácora de auditoría</figcaption></figure>
+    <figure class=""><img src="../capturas/17-usuario-mi-cuenta.png" alt="Sección de usuario: mi cuenta y mis movimientos"><figcaption>Sección de usuario: mi cuenta y mis movimientos</figcaption></figure>
+  </div>
+</section>
+
+<section>
+  <h2>7. Reflexión final</h2>
+  <p class="pregunta">¿Qué ventajas ofrece la gestión de roles y funciones en bases de datos en la nube para proyectos reales?</p>
+  <p>La principal ventaja es que la seguridad deja de depender de que cada programa “se porte bien” y pasa a estar garantizada
+  por el motor de base de datos. En este proyecto la aplicación web se conecta con <code>app_nexo</code>, un usuario del rol
+  <code>"user"</code>: aunque alguien encontrara una falla en la aplicación o robara su cadena de conexión, no podría crear, alterar ni
+  borrar tablas, porque PostgreSQL responde <em>permission denied</em>. Esto es el <strong>principio de mínimo privilegio</strong>, y en la
+  nube es todavía más importante, ya que la base de datos es accesible desde Internet y no está protegida sólo por la red de la empresa.</p>
+  <p>Los roles también <strong>separan responsabilidades</strong> y simplifican la administración del personal. El rol <code>developer</code> agrupa lo que
+  necesita el equipo de desarrollo y el rol <code>"user"</code> lo que necesita la operación diaria; dar de alta a un nuevo integrante es
+  un solo <code>GRANT</code>, y darlo de baja no afecta a nadie más. Con los <strong>privilegios por defecto</strong> comprobamos que una
+  tabla creada después por un desarrollador quedó disponible de inmediato para los usuarios operativos sin volver a otorgar permisos, lo
+  que evita errores humanos cuando el esquema crece. Además, al tener un usuario por persona o servicio, cada acción queda atribuida a
+  alguien, lo que facilita auditorías.</p>
+  <p>Las <strong>funciones</strong> centralizan las reglas del negocio junto a los datos. <code>fn_registrar_movimiento</code> valida la existencia,
+  bloquea la fila para evitar que dos ventas simultáneas dejen el inventario en negativo e inserta el movimiento y la nueva existencia
+  en una sola operación atómica. Da igual si el movimiento llega desde la aplicación web, desde un script o desde una futura app
+  móvil: la regla se cumple siempre y existe en un solo lugar. En la nube esto además <strong>reduce la latencia y el costo</strong>, porque una
+  sola llamada sustituye varias idas y vueltas por la red. Las funciones de cálculo, como <code>fn_valor_inventario</code>, y las vistas con
+  CTEs permiten que distintos reportes obtengan exactamente el mismo resultado (lo verificamos comparando la vista contra la función en
+  la evidencia 7) y ocultan la complejidad de las consultas a quien sólo necesita leer datos.</p>
+  <p>Por último, un servicio administrado como Neon añade ventajas propias: no hay servidor que instalar ni parchar, las conexiones
+  van cifradas con SSL, la base de datos escala y se suspende sola según la carga, y las ramas (<em>branches</em>) permiten probar cambios
+  de roles o de funciones en una copia antes de aplicarlos en producción. La contraparte es que la lógica en la base de datos también es
+  código: debe versionarse y probarse, razón por la cual todos los scripts de este proyecto están en el repositorio y las evidencias se
+  pueden regenerar con un solo comando.</p>
+</section>
+</body>
+</html>

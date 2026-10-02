@@ -1,0 +1,32 @@
+<%- include('../partials/inicio') %>
+<div class="page-head">
+  <div><p class="eyebrow">Administración</p><h1>Usuarios del sistema</h1><p class="sub">Cuentas de la aplicación web. El rol de aplicación (admin / usuario) controla qué secciones puede usar cada persona.</p></div>
+  <div class="acciones"><a class="btn btn-primario" href="/admin/usuarios/nuevo"><%- icono('mas') %> Nuevo usuario</a></div>
+</div>
+<article class="card card-sin-padding">
+  <div class="tabla-scroll">
+    <table class="tabla">
+      <thead><tr><th>Usuario</th><th>Rol</th><th>Puesto</th><th>Almacén a cargo</th><th class="num">Movimientos</th><th>Último acceso</th><th>Estado</th><th></th></tr></thead>
+      <tbody>
+        <% usuarios.forEach(u => { %>
+          <tr class="<%= u.activo ? '' : 'fila-inactiva' %>">
+            <td>
+              <div style="display: flex; gap: 10px; align-items: center">
+                <div class="avatar"><%= iniciales(u.nombre, u.apellidos) %></div>
+                <div class="celda-producto" style="min-width: 0"><strong><%= u.nombre %> <%= u.apellidos %></strong><span class="muted"><%= u.correo %></span></div>
+              </div>
+            </td>
+            <td><span class="rol-chip rol-<%= u.rol %>"><%= u.rol === 'admin' ? 'Administrador' : 'Usuario' %></span></td>
+            <td><%= u.puesto || '—' %></td>
+            <td><%= u.almacenes || '—' %></td>
+            <td class="num"><%= numero(u.movimientos) %></td>
+            <td class="muted"><%= relativo(u.ultimo_acceso) %></td>
+            <td><span class="badge <%= u.activo ? 'badge-verde' : 'badge-gris' %>"><%= u.activo ? 'Activo' : 'Inactivo' %></span></td>
+            <td><a class="btn btn-fantasma btn-sm" href="/admin/usuarios/<%= u.id_usuario %>/editar"><%- icono('editar') %> Editar</a></td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+</article>
+<%- include('../partials/fin') %>

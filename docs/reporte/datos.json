@@ -1,0 +1,27 @@
+{
+  "portada": {
+    "institucion": "",
+    "carrera": "",
+    "materia": "Bases de Datos Relacionales",
+    "unidad": "Unidad 1",
+    "titulo": "Implementación completa de una base de datos en la nube (Neon + PostgreSQL)",
+    "subtitulo": "Sistema de inventario para Distribuidora Nexo S.A. de C.V. (empresa ficticia)",
+    "alumno": "",
+    "matricula": "",
+    "grupo": "",
+    "docente": "",
+    "fecha": "30 de septiembre de 2026",
+    "repositorio": "https://github.com/Vizpok/Sistema_Inventario_Proyecto"
+  },
+  "neon": {
+    "proyecto": "nexo-inventario-u1",
+    "id_proyecto": "small-brook-55535774",
+    "proveedor_region": "AWS · us-east-2 (Ohio)",
+    "version": "PostgreSQL 18",
+    "rama": "main (rama principal)",
+    "base_de_datos": "nexo_inventario",
+    "propietario": "nexo_inventario_owner",
+    "conexion": "Pooler de Neon con SSL obligatorio (sslmode=require); la app usa el driver HTTPS @neondatabase/serverless",
+    "creado": "2026-09-30 20:19 UTC"
+  }
+}

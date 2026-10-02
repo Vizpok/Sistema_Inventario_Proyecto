@@ -1,0 +1,17 @@
+<%- include('../partials/inicio') %>
+<div>
+  <a class="volver" href="/categorias"><%- icono('flecha') %> Categorías</a>
+  <div class="page-head"><div><h1>Editar categoría</h1></div></div>
+</div>
+<% if (typeof error !== 'undefined' && error) { %><div class="alerta alerta-error"><%- icono('alerta') %><span><%= error %></span></div><% } %>
+<form method="post" action="/categorias/<%= categoria.id_categoria %>" class="card form" style="max-width: 560px">
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+  <label class="campo"><span>Nombre *</span><input type="text" name="nombre" value="<%= categoria.nombre %>" required maxlength="60"></label>
+  <label class="campo"><span>Descripción</span><textarea name="descripcion" maxlength="255"><%= categoria.descripcion || '' %></textarea></label>
+  <label class="campo"><span>Color de etiqueta</span><input type="color" name="color" value="<%= categoria.color %>"></label>
+  <div class="form-acciones">
+    <a class="btn btn-fantasma" href="/categorias">Cancelar</a>
+    <button class="btn btn-primario"><%- icono('check') %> Guardar</button>
+  </div>
+</form>
+<%- include('../partials/fin') %>

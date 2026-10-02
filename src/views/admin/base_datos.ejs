@@ -1,0 +1,93 @@
+<%- include('../partials/inicio') %>
+<% const si = (v) => v ? '<span class="permiso-si" title="Sí">✓</span>' : '<span class="permiso-no" title="No">✕</span>'; %>
+<div class="page-head">
+  <div><p class="eyebrow">Administración</p><h1>Base de datos en Neon</h1><p class="sub">Roles, permisos, vistas y funciones consultados en vivo desde el catálogo de PostgreSQL.</p></div>
+</div>
+
+<section class="kpis">
+  <article class="kpi"><div class="kpi-ico ico-indigo"><%- icono('basedatos') %></div><div><p class="kpi-etiqueta">Base de datos</p><p class="kpi-valor" style="font-size: 18px"><%= conexion.bd %></p><p class="kpi-nota"><%= conexion.version %></p></div></article>
+  <article class="kpi"><div class="kpi-ico ico-azul"><%- icono('usuario') %></div><div><p class="kpi-etiqueta">Conexión de la app</p><p class="kpi-valor" style="font-size: 18px" class="mono"><%= conexion.session_user %></p><p class="kpi-nota">miembro de: <strong><%= conexion.roles_heredados || '—' %></strong></p></div></article>
+  <article class="kpi"><div class="kpi-ico ico-verde"><%- icono('bitacora') %></div><div><p class="kpi-etiqueta">Vistas / funciones</p><p class="kpi-valor"><%= vistas.length %> / <%= funciones.length %></p><p class="kpi-nota">en el esquema public</p></div></article>
+</section>
+
+<section class="grid grid-2">
+  <article class="card">
+    <header class="card-head"><div><h2>Roles y usuarios</h2><p class="sub"><code>pg_roles</code> + <code>pg_auth_members</code></p></div></header>
+    <div class="tabla-scroll"><table class="tabla">
+      <thead><tr><th>Rol</th><th>Login</th><th>Miembro de</th><th>Descripción</th></tr></thead>
+      <tbody><% roles.forEach(r => { %><tr>
+        <td class="mono"><strong><%= r.rolname === 'user' ? '"user"' : r.rolname %></strong></td>
+        <td><%- si(r.rolcanlogin) %></td>
+        <td class="mono"><%= (r.miembro_de || '—').replace(/\buser\b/, '"user"') %></td>
+        <td class="muted"><%= r.descripcion || '' %></td>
+      </tr><% }) %></tbody>
+    </table></div>
+  </article>
+  <article class="card">
+    <header class="card-head"><div><h2>Permisos de base de datos y esquema</h2><p class="sub"><code>has_database_privilege</code> / <code>has_schema_privilege</code></p></div></header>
+    <div class="tabla-scroll"><table class="tabla">
+      <thead><tr><th>Rol</th><th>CONNECT</th><th>TEMP</th><th>USAGE public</th><th>CREATE public</th></tr></thead>
+      <tbody><% privEsquema.forEach(p => { %><tr>
+        <td class="mono"><strong><%= p.rol === 'user' ? '"user"' : p.rol %></strong></td>
+        <td><%- si(p.conectar) %></td><td><%- si(p.temporales) %></td><td><%- si(p.usar_public) %></td><td><%- si(p.crear_en_public) %></td>
+      </tr><% }) %></tbody>
+    </table></div>
+    <div class="ayuda" style="margin-top: 14px" id="prueba"><%- icono('escudo') %><span><code>developer</code> puede crear objetos; <code>"user"</code> no. Pruébalo: la app se conecta como <code><%= conexion.session_user %></code>.</span></div>
+    <form method="post" action="/admin/base-datos/probar" style="margin-top: 12px">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <button class="btn btn-secundario"><%- icono('basedatos') %> Intentar CREATE TABLE con la conexión de la app</button>
+    </form>
+    <% if (prueba) { %>
+      <div class="alerta <%= prueba.ok ? 'alerta-error' : 'alerta-exito' %>" style="margin-top: 12px">
+        <%- icono(prueba.ok ? 'alerta' : 'check') %>
+        <span><% if (!prueba.ok) { %>Rechazado como se esperaba — <code>SQLSTATE <%= prueba.codigo %></code>: <%= prueba.mensaje %><% } else { %><%= prueba.mensaje %><% } %></span>
+      </div>
+    <% } %>
+  </article>
+</section>
+
+<article class="card">
+  <header class="card-head"><div><h2>Permisos CRUD por tabla y vista</h2><p class="sub"><code>has_table_privilege(rol, tabla, privilegio)</code> — S=SELECT, I=INSERT, U=UPDATE, D=DELETE</p></div></header>
+  <div class="tabla-scroll"><table class="tabla tabla-compacta">
+    <thead>
+      <tr><th rowspan="2">Objeto</th><th rowspan="2">Tipo</th><th colspan="4" style="text-align: center">developer</th><th colspan="4" style="text-align: center">"user"</th></tr>
+      <tr><th>S</th><th>I</th><th>U</th><th>D</th><th>S</th><th>I</th><th>U</th><th>D</th></tr>
+    </thead>
+    <tbody><% privTablas.forEach(t => { %><tr>
+      <td class="mono"><%= t.tabla %></td><td><%= t.relkind === 'v' ? 'Vista' : 'Tabla' %></td>
+      <td><%- si(t.dev_s) %></td><td><%- si(t.dev_i) %></td><td><%- si(t.dev_u) %></td><td><%- si(t.dev_d) %></td>
+      <td><%- si(t.usr_s) %></td><td><%- si(t.usr_i) %></td><td><%- si(t.usr_u) %></td><td><%- si(t.usr_d) %></td>
+    </tr><% }) %></tbody>
+  </table></div>
+</article>
+
+<article class="card">
+  <header class="card-head"><div><h2>Privilegios por defecto (objetos futuros)</h2><p class="sub"><code>pg_default_acl</code> — formato <code>rol=privilegios/otorgante</code> (r=SELECT, a=INSERT, w=UPDATE, d=DELETE, U=USAGE, X=EXECUTE)</p></div></header>
+  <div class="tabla-scroll"><table class="tabla">
+    <thead><tr><th>Cuando crea</th><th>Objetos</th><th>Permisos otorgados automáticamente</th></tr></thead>
+    <tbody><% defaults.forEach(d => { %><tr><td class="mono"><%= d.creador %></td><td><%= d.objetos %></td><td><pre class="mono" style="margin: 0; white-space: pre-wrap"><%= d.permisos %></pre></td></tr><% }) %></tbody>
+  </table></div>
+</article>
+
+<section class="grid grid-2">
+  <article class="card">
+    <header class="card-head"><div><h2>Vistas (con CTE)</h2><p class="sub"><code>pg_get_viewdef()</code></p></div></header>
+    <% vistas.forEach(v => { %>
+      <details class="bloque"><summary class="mono"><%= v.nombre %></summary><p class="muted" style="margin-bottom: 8px"><%= v.descripcion %></p><pre class="sql"><%= v.definicion %></pre></details>
+    <% }) %>
+  </article>
+  <article class="card">
+    <header class="card-head"><div><h2>Funciones</h2><p class="sub"><code>pg_proc</code></p></div></header>
+    <% funciones.forEach(f => { %>
+      <details class="bloque" open>
+        <summary class="mono"><%= f.nombre %>()</summary>
+        <p class="muted" style="margin-bottom: 8px"><%= f.descripcion %></p>
+        <dl class="datos datos-1">
+          <div><dt>Argumentos</dt><dd class="mono" style="font-weight: 400"><%= f.argumentos %></dd></div>
+          <div><dt>Retorna</dt><dd class="mono"><%= f.retorna %> · <%= f.lenguaje %></dd></div>
+        </dl>
+      </details>
+    <% }) %>
+  </article>
+</section>
+<%- include('../partials/fin') %>
