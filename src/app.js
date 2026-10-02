@@ -1,10 +1,10 @@
 require('dotenv').config({ quiet: true });
 const path = require('path');
 const express = require('express');
-const cookieSession = require('cookie-session');
 const ejs = require('ejs');
 const formato = require('./utils/formato');
 const iconos = require('./utils/iconos');
+const crearSesion = require('./sesion');
 const { flash, csrf, requiereSesion, requiereAdmin } = require('./middleware');
 
 // Raíz del proyecto (configurable para la versión empaquetada que corre en Neon Functions)
@@ -21,15 +21,8 @@ app.use(express.static(path.join(RAIZ, 'public')));
 app.use('/vendor/chart.js', express.static(DIR_CHARTJS));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
-// Sesión en una cookie firmada: no guarda estado en el servidor, así funciona igual
-// en local y en Neon Functions (donde las instancias se reciclan o se multiplican).
-app.use(cookieSession({
-  name: 'nexo.sid',
-  secret: process.env.SESSION_SECRET || 'cambia-este-secreto-en-produccion',
-  httpOnly: true,
-  sameSite: 'lax',
-  maxAge: 8 * 60 * 60 * 1000,
-}));
+// Sesión en una cookie firmada (ver src/sesion.js): no guarda estado en el servidor
+app.use(crearSesion({ secreto: process.env.SESSION_SECRET || 'cambia-este-secreto-en-produccion' }));
 // Variables disponibles en todas las vistas
 Object.assign(app.locals, formato, { icono: iconos.icono, empresa: 'Distribuidora Nexo' });
 app.use((req, res, next) => {
