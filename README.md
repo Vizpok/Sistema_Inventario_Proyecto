@@ -6,6 +6,9 @@ sistema web de inventario para **Distribuidora Nexo S.A. de C.V.** (empresa fict
 
 ![Dashboard](docs/capturas/02-dashboard.png)
 
+🌐 **Demo en línea (Neon Functions):** https://br-broad-wildflower-b59kivdz-nexo.compute.c-7.us-east-2.aws.neon.tech/
+— la app corre en Neon junto a la base de datos y se conecta como `app_nexo` ([cómo está desplegada](deploy/neon/README.md)).
+
 🐘 **Evidencias con DBeaver y la consola de Neon:** [`docs/GUIA_DBEAVER_NEON.md`](docs/GUIA_DBEAVER_NEON.md) · [prompt para Claude](docs/PROMPT_CAPTURAS.md)
 
 📄 **Producto final (PDF):** [`docs/reporte/Reporte_Proyecto_U1.pdf`](docs/reporte/Reporte_Proyecto_U1.pdf) ·
@@ -91,6 +94,7 @@ npm start            # http://localhost:3000
 | `npm run db:datos` | Regenera `database/05_datos_prueba.sql` (datos ficticios, ~500 movimientos vía la función) |
 | `npm run evidencias` | Ejecuta `06_evidencias.sql` iniciando sesión con cada usuario y guarda `docs/evidencias/` |
 | `npm run evidencias:dividir` | Divide las evidencias en `database/evidencias_manual/` (un archivo por conexión) para DBeaver / Neon |
+| `npm run build:neon` | Empaqueta la app para Neon Functions (ver [`deploy/neon/README.md`](deploy/neon/README.md)) |
 | `npm run reporte` | Genera `docs/reporte/Reporte_Proyecto_U1.html` y `.pdf` (usa Edge/Chrome instalado) |
 
 Para reiniciar los datos: `npm run sql -- database/00_reiniciar_datos.sql database/05_datos_prueba.sql`.
