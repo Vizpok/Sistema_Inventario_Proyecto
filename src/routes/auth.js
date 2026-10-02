@@ -24,20 +24,19 @@ router.post('/login', async (req, res) => {
     return res.status(403).render('auth/login', { titulo: 'Iniciar sesión', correo, error: 'Tu cuenta está desactivada. Contacta al administrador.' });
   }
   const volverA = req.session.volverA;
-  req.session.regenerate(async (err) => {
-    if (err) throw err;
-    req.session.usuario = {
-      id: u.id_usuario, nombre: u.nombre, apellidos: u.apellidos, correo: u.correo, rol: u.rol, puesto: u.puesto,
-    };
-    await query('UPDATE usuarios SET ultimo_acceso = now() WHERE id_usuario = $1', [u.id_usuario]);
-    await registrarBitacora(req, 'LOGIN', 'Sesión', `Inicio de sesión de ${u.correo}`);
-    res.redirect(volverA && volverA.startsWith('/') ? volverA : '/dashboard');
-  });
+  // Sesión nueva al iniciar sesión (evita fijación de sesión): se descarta todo lo anterior
+  req.session = {
+    usuario: { id: u.id_usuario, nombre: u.nombre, apellidos: u.apellidos, correo: u.correo, rol: u.rol, puesto: u.puesto },
+  };
+  await query('UPDATE usuarios SET ultimo_acceso = now() WHERE id_usuario = $1', [u.id_usuario]);
+  await registrarBitacora(req, 'LOGIN', 'Sesión', `Inicio de sesión de ${u.correo}`);
+  res.redirect(volverA && volverA.startsWith('/') && !volverA.startsWith('//') ? volverA : '/dashboard');
 });
 
 router.post('/logout', async (req, res) => {
   if (req.session.usuario) await registrarBitacora(req, 'LOGOUT', 'Sesión', `Cierre de sesión de ${req.session.usuario.correo}`);
-  req.session.destroy(() => res.redirect('/login'));
+  req.session = null;
+  res.redirect('/login');
 });
 
 module.exports = router;

@@ -11,7 +11,8 @@
     "db:datos": "node scripts/generar-datos.js",
     "evidencias": "node scripts/evidencias.js",
     "reporte": "node scripts/generar-reporte.js",
-    "evidencias:dividir": "node scripts/dividir-evidencias.js"
+    "evidencias:dividir": "node scripts/dividir-evidencias.js",
+    "build:neon": "node scripts/build-neon.js"
   },
   "engines": {
     "node": ">=18"
@@ -21,12 +22,13 @@
     "@neondatabase/serverless": "^1.1.0",
     "bcryptjs": "^3.0.3",
     "chart.js": "^4.5.1",
+    "cookie-session": "^2.1.1",
     "dotenv": "^18.0.5",
     "ejs": "^6.0.1",
-    "express": "^5.2.1",
-    "express-session": "^1.19.0"
+    "express": "^5.2.1"
   },
   "devDependencies": {
+    "esbuild": "^0.28.2",
     "playwright-core": "^1.63.0"
   }
 }
