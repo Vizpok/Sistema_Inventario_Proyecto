@@ -6,7 +6,12 @@ sistema web de inventario para **Distribuidora Nexo S.A. de C.V.** (empresa fict
 
 ![Dashboard](docs/capturas/02-dashboard.png)
 
-🌐 **Demo en línea (Neon Functions):** https://br-broad-wildflower-b59kivdz-nexo.compute.c-7.us-east-2.aws.neon.tech/
+🌐 **Publicación en Render** (recomendada): GitHub guarda el código, Render ejecuta la app y Neon guarda los datos.
+Cada `git push` a `main` vuelve a publicar la app sola ([pasos](#publicar-en-render)).
+
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/Vizpok/Sistema_Inventario_Proyecto)
+
+🌐 **Respaldo en Neon Functions:** https://br-broad-wildflower-b59kivdz-nexo.compute.c-7.us-east-2.aws.neon.tech/
 — la app corre en Neon junto a la base de datos y se conecta como `app_nexo` ([cómo está desplegada](deploy/neon/README.md)).
 
 🐘 **Evidencias con DBeaver y la consola de Neon:** [`docs/GUIA_DBEAVER_NEON.md`](docs/GUIA_DBEAVER_NEON.md) · [prompt para Claude](docs/PROMPT_CAPTURAS.md)
@@ -84,6 +89,31 @@ marcadores `{{PWD_...}}` por contraseñas reales).
 ```bash
 npm start            # http://localhost:3000
 ```
+
+## Publicar en Render
+
+```
+GitHub (código) ──push──► Render (app Node.js/Express) ──SQL──► Neon (nexo_inventario, usuario app_nexo)
+```
+
+La configuración está en [`render.yaml`](render.yaml): servicio web gratuito en Ohio (la misma zona que la base de
+Neon), `npm ci --omit=dev` para instalar, `npm start` para arrancar y publicación automática en cada push.
+
+1. Entra a <https://dashboard.render.com> con tu cuenta de GitHub.
+2. **New → Blueprint** y elige el repositorio `Sistema_Inventario_Proyecto`, rama **`main`**
+   (o usa el botón *Deploy to Render* de arriba).
+3. Render pide **`DATABASE_URL`**: pega la cadena de conexión de **`app_nexo`** (la misma de tu `.env`).
+   `SESSION_SECRET` lo genera Render solo.
+4. **Deploy Blueprint**. En unos minutos queda en `https://nexo-inventario.onrender.com` (o el nombre que asigne Render).
+
+| Si cambias… | ¿Se publica solo? |
+|---|---|
+| Código de la app (pantallas, rutas, estilos) o dependencias | ✅ con `git push` a `main` |
+| La base de datos (tablas, vistas, funciones, roles) | ❌ ejecuta el SQL en Neon primero (`npm run sql`, SQL Editor o DBeaver) |
+| Una variable de entorno nueva | ❌ agrégala en Render → *Environment* |
+
+Plan gratuito: Render apaga la app tras 15 minutos sin visitas y la siguiente visita tarda ~1 minuto en
+despertarla (muestra una pantalla de carga). Ábrela unos minutos antes de una demostración.
 
 ## Scripts
 
