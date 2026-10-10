@@ -1,0 +1,9 @@
+<% if (paginas > 1 || typeof total !== 'undefined') { %>
+<div class="paginacion">
+  <span>Página <%= pagina %> de <%= paginas %><% if (typeof total !== 'undefined') { %> · <%= numero(total) %> registros<% } %></span>
+  <div class="botones">
+    <% if (pagina > 1) { %><a class="btn btn-secundario btn-sm" href="<%= urlCon(base, filtrosPag, { pagina: pagina - 1 }) %>">Anterior</a><% } %>
+    <% if (pagina < paginas) { %><a class="btn btn-secundario btn-sm" href="<%= urlCon(base, filtrosPag, { pagina: pagina + 1 }) %>">Siguiente</a><% } %>
+  </div>
+</div>
+<% } %>

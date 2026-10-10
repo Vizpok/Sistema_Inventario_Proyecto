@@ -1,0 +1,29 @@
+<%- include('../partials/inicio') %>
+<% const edicion = !!u.id_usuario; %>
+<div>
+  <a class="volver" href="/admin/usuarios"><%- icono('flecha') %> Usuarios</a>
+  <div class="page-head"><div><h1><%= titulo %></h1></div></div>
+</div>
+<% if (typeof error !== 'undefined' && error) { %><div class="alerta alerta-error"><%- icono('alerta') %><span><%= error %></span></div><% } %>
+<form method="post" action="<%= edicion ? '/admin/usuarios/' + u.id_usuario : '/admin/usuarios' %>" class="card form" style="max-width: 760px">
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+  <div class="form-grid">
+    <label class="campo"><span>Nombre *</span><input type="text" name="nombre" value="<%= u.nombre || '' %>" required maxlength="80"></label>
+    <label class="campo"><span>Apellidos *</span><input type="text" name="apellidos" value="<%= u.apellidos || '' %>" required maxlength="100"></label>
+    <label class="campo"><span>Correo *</span><input type="email" name="correo" value="<%= u.correo || '' %>" required maxlength="120"></label>
+    <label class="campo"><span>Puesto</span><input type="text" name="puesto" value="<%= u.puesto || '' %>" maxlength="80"></label>
+    <label class="campo"><span>Rol *</span>
+      <select name="rol">
+        <option value="usuario" <%= u.rol === 'usuario' ? 'selected' : '' %>>Usuario — opera inventario y movimientos</option>
+        <option value="admin" <%= u.rol === 'admin' ? 'selected' : '' %>>Administrador — acceso total</option>
+      </select>
+    </label>
+    <label class="campo"><span><%= edicion ? 'Nueva contraseña' : 'Contraseña *' %></span><input type="password" name="password" <%= edicion ? '' : 'required' %> minlength="8" autocomplete="new-password"><small><%= edicion ? 'Déjala vacía para conservar la actual.' : 'Mínimo 8 caracteres. Se guarda con hash bcrypt.' %></small></label>
+    <label class="check col-completa"><input type="checkbox" name="activo" <%= u.activo ? 'checked' : '' %>> Cuenta activa</label>
+  </div>
+  <div class="form-acciones">
+    <a class="btn btn-fantasma" href="/admin/usuarios">Cancelar</a>
+    <button class="btn btn-primario"><%- icono('check') %> Guardar usuario</button>
+  </div>
+</form>
+<%- include('../partials/fin') %>

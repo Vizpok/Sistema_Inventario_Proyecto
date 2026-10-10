@@ -1,0 +1,25 @@
+# Blueprint de Render: publica la app web y la conecta a la base de datos de Neon.
+# Render lee este archivo al crear el servicio (New → Blueprint) y vuelve a
+# publicar la app en cada push a la rama elegida (main).
+services:
+  - type: web
+    name: nexo-inventario
+    runtime: node
+    region: ohio            # misma zona que la base de Neon (aws-us-east-2)
+    plan: free
+    buildCommand: npm ci --omit=dev
+    startCommand: npm start
+    healthCheckPath: /login
+    autoDeployTrigger: commit
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: NODE_ENV
+        value: production
+      # Conexión como app_nexo (rol "user"). Render la pide al crear el servicio;
+      # nunca se escribe aquí.
+      - key: DATABASE_URL
+        sync: false
+      # Secreto para firmar la cookie de sesión (Render lo genera)
+      - key: SESSION_SECRET
+        generateValue: true

@@ -1,0 +1,47 @@
+<%- include('../partials/inicio') %>
+<% const etiquetaEstado = { 'SIN STOCK': 'Agotado', BAJO: 'Stock bajo', NORMAL: 'Disponible', EXCESO: 'Sobre stock', INACTIVO: 'Inactivo' }; %>
+<div class="page-head">
+  <div>
+    <h1>Catálogo de productos</h1>
+    <p class="sub"><%= productos.length %> productos<%= filtros.q ? ` que coinciden con “${filtros.q}”` : '' %>.</p>
+  </div>
+  <div class="acciones">
+    <% if (esAdmin) { %>
+      <a class="btn btn-secundario" href="<%= urlCon('/catalogo', filtros, { inactivos: filtros.inactivos ? '' : '1' }) %>"><%= filtros.inactivos ? 'Ocultar inactivos' : 'Mostrar inactivos' %></a>
+      <a class="btn btn-primario" href="/catalogo/nuevo"><%- icono('mas') %> Nuevo producto</a>
+    <% } %>
+  </div>
+</div>
+
+<div class="chips">
+  <a class="chip <%= !filtros.categoria ? 'activo' : '' %>" href="<%= urlCon('/catalogo', filtros, { categoria: '' }) %>">Todas</a>
+  <% categorias.forEach(c => { %>
+    <a class="chip <%= String(c.id_categoria) === filtros.categoria ? 'activo' : '' %>" href="<%= urlCon('/catalogo', filtros, { categoria: c.id_categoria }) %>">
+      <span class="punto" style="background: <%= c.color %>; margin: 0"></span><%= c.nombre %><span class="conteo"><%= c.total %></span>
+    </a>
+  <% }) %>
+</div>
+
+<% if (!productos.length) { %>
+  <div class="card vacio">No se encontraron productos. <a href="/catalogo">Ver todo el catálogo</a></div>
+<% } %>
+<div class="productos-grid">
+  <% productos.forEach(p => { %>
+    <a class="producto-card <%= p.activo ? '' : 'producto-inactivo' %>" href="/catalogo/<%= p.id_producto %>">
+      <div class="producto-portada" style="background: color-mix(in srgb, <%= p.color %> 13%, var(--superficie)); color: <%= p.color %>">
+        <%- icono('inventario') %>
+        <span class="badge badge-<%= claseEstado(p.estado) %>"><%= etiquetaEstado[p.estado] %></span>
+      </div>
+      <div class="producto-cuerpo">
+        <div class="producto-meta"><span class="mono"><%= p.sku %></span><span><%= p.categoria %></span></div>
+        <h3><%= p.nombre %></h3>
+        <p class="muted" style="font-size: 12px"><%= p.proveedor_principal || 'Sin proveedor asignado' %></p>
+        <div class="producto-pie">
+          <div><span class="muted" style="font-size: 12px">Precio de venta</span><div class="precio"><%= moneda(p.precio_venta) %></div></div>
+          <div class="num"><span class="muted" style="font-size: 12px">Existencia</span><div><strong><%= numero(p.existencia_total) %></strong> <span class="muted"><%= p.unidad %></span></div></div>
+        </div>
+      </div>
+    </a>
+  <% }) %>
+</div>
+<%- include('../partials/fin') %>

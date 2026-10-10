@@ -1,0 +1,74 @@
+<%- include('../partials/inicio') %>
+<% const p = producto; const etiquetaEstado = { 'SIN STOCK': 'Agotado', BAJO: 'Stock bajo', NORMAL: 'Normal', EXCESO: 'Sobre stock' }; %>
+<div>
+  <a class="volver" href="/catalogo"><%- icono('flecha') %> Catálogo</a>
+  <div class="page-head">
+    <div class="detalle-head">
+      <div class="detalle-ico" style="background: color-mix(in srgb, <%= p.color %> 14%, var(--superficie)); color: <%= p.color %>"><%- icono('inventario') %></div>
+      <div>
+        <p class="eyebrow"><%= p.categoria %> · <span class="mono"><%= p.sku %></span></p>
+        <h1><%= p.nombre %></h1>
+        <p class="sub"><%= p.descripcion || 'Sin descripción' %></p>
+      </div>
+    </div>
+    <div class="acciones">
+      <% if (p.activo) { %><a class="btn btn-primario" href="/movimientos/nuevo?producto=<%= p.id_producto %>"><%- icono('movimientos') %> Registrar movimiento</a><% } %>
+      <% if (esAdmin) { %>
+        <a class="btn btn-secundario" href="/catalogo/<%= p.id_producto %>/editar"><%- icono('editar') %> Editar</a>
+        <form method="post" action="/catalogo/<%= p.id_producto %>/estado" class="en-linea" data-confirmar="<%= p.activo ? '¿Desactivar este producto? Dejará de aparecer en el catálogo y no podrá moverse.' : '¿Reactivar este producto?' %>">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <button class="btn <%= p.activo ? 'btn-peligro' : 'btn-secundario' %>"><%- icono('power') %> <%= p.activo ? 'Desactivar' : 'Reactivar' %></button>
+        </form>
+      <% } %>
+    </div>
+  </div>
+</div>
+
+<section class="kpis">
+  <article class="kpi"><div class="kpi-ico ico-azul"><%- icono('inventario') %></div><div><p class="kpi-etiqueta">Existencia total</p><p class="kpi-valor"><%= numero(p.existencia_total) %> <small class="muted" style="font-size: 14px"><%= p.unidad %></small></p><p class="kpi-nota">Mín. <%= p.stock_minimo %> · Máx. <%= p.stock_maximo || '—' %></p></div></article>
+  <article class="kpi"><div class="kpi-ico ico-indigo"><%- icono('dinero') %></div><div><p class="kpi-etiqueta">Valor en inventario</p><p class="kpi-valor"><%= moneda(p.valor_inventario) %></p><p class="kpi-nota">Compra <%= moneda(p.precio_compra) %> · Venta <%= moneda(p.precio_venta) %></p></div></article>
+  <article class="kpi"><div class="kpi-ico ico-verde"><%- icono('salida') %></div><div><p class="kpi-etiqueta">Salidas (30 días)</p><p class="kpi-valor"><%= numero(p.salidas_30d) %></p><p class="kpi-nota">Cobertura: <%= p.dias_cobertura !== null && p.dias_cobertura !== undefined ? p.dias_cobertura + ' días' : 'sin rotación' %></p></div></article>
+  <article class="kpi"><div class="kpi-ico <%= p.estado === 'NORMAL' ? 'ico-verde' : p.estado === 'EXCESO' ? 'ico-azul' : 'ico-ambar' %>"><%- icono('alerta') %></div><div><p class="kpi-etiqueta">Estado</p><p class="kpi-valor" style="font-size: 20px"><% if (p.activo) { %><span class="badge badge-<%= claseEstado(p.estado) %>" style="font-size: 14px"><%= etiquetaEstado[p.estado] %></span><% } else { %><span class="badge badge-gris" style="font-size: 14px">Inactivo</span><% } %></p><p class="kpi-nota">Margen <%= p.precio_compra > 0 ? Math.round((p.precio_venta / p.precio_compra - 1) * 100) : 0 %>%</p></div></article>
+</section>
+
+<section class="grid grid-2">
+  <article class="card">
+    <header class="card-head"><div><h2>Existencias por almacén</h2><p class="sub">Tabla <code>inventario</code> (N:M productos–almacenes)</p></div></header>
+    <% if (!existencias.length) { %><p class="vacio">Aún no hay existencias. Registra una entrada.</p><% } else { %>
+    <div class="tabla-scroll"><table class="tabla">
+      <thead><tr><th>Almacén</th><th>Ubicación</th><th class="num">Existencia</th><th>Actualizado</th></tr></thead>
+      <tbody><% existencias.forEach(e => { %><tr><td><%= e.almacen %></td><td class="mono"><%= e.ubicacion || '—' %></td><td class="num"><strong><%= numero(e.existencia) %></strong></td><td class="muted"><%= relativo(e.actualizado_en) %></td></tr><% }) %></tbody>
+    </table></div>
+    <% } %>
+  </article>
+  <article class="card">
+    <header class="card-head"><div><h2>Proveedores</h2><p class="sub">Tabla <code>producto_proveedor</code> (N:M)</p></div></header>
+    <% if (!proveedores.length) { %><p class="vacio">Sin proveedores asignados.</p><% } else { %>
+    <div class="tabla-scroll"><table class="tabla">
+      <thead><tr><th>Proveedor</th><th class="num">Costo</th><th class="num">Entrega</th><th></th></tr></thead>
+      <tbody><% proveedores.forEach(pr => { %><tr><td><a href="/proveedores/<%= pr.id_proveedor %>"><%= pr.razon_social %></a><div class="muted" style="font-size: 12px"><%= pr.telefono %></div></td><td class="num"><%= moneda(pr.costo) %></td><td class="num"><%= pr.dias_entrega %> d</td><td><% if (pr.es_principal) { %><span class="badge badge-azul badge-simple">Principal</span><% } %></td></tr><% }) %></tbody>
+    </table></div>
+    <% } %>
+  </article>
+</section>
+
+<article class="card">
+  <header class="card-head"><div><h2>Kardex del producto</h2><p class="sub">Últimos 40 movimientos con la existencia resultante en su almacén</p></div><a class="enlace" href="/movimientos?q=<%= encodeURIComponent(p.sku) %>">Ver todos</a></header>
+  <% if (!kardex.length) { %><p class="vacio">Sin movimientos registrados.</p><% } else { %>
+  <div class="tabla-scroll"><table class="tabla">
+    <thead><tr><th>Folio</th><th>Fecha</th><th>Tipo</th><th>Almacén</th><th class="num">Cantidad</th><th class="num">Costo unit.</th><th class="num">Existencia</th><th>Referencia</th><th>Usuario</th></tr></thead>
+    <tbody><% kardex.forEach(m => { %><tr>
+      <td><a class="mono" href="/movimientos/<%= m.id_movimiento %>"><%= m.folio %></a></td>
+      <td class="muted"><%= fechaHora(m.fecha) %></td>
+      <td><span class="tipo tipo-<%= m.naturaleza.toLowerCase() %>"><%- icono(m.naturaleza === 'ENTRADA' ? 'entrada' : 'salida') %><%= m.tipo %></span></td>
+      <td><%= m.almacen %></td>
+      <td class="num <%= m.naturaleza === 'ENTRADA' ? 'txt-entrada' : 'txt-salida' %>"><%= m.naturaleza === 'ENTRADA' ? '+' : '−' %><%= numero(m.cantidad) %></td>
+      <td class="num"><%= moneda(m.costo_unitario) %></td>
+      <td class="num"><strong><%= numero(m.existencia_resultante) %></strong></td>
+      <td class="mono muted"><%= m.referencia || '—' %></td>
+      <td><%= m.usuario %></td>
+    </tr><% }) %></tbody>
+  </table></div>
+  <% } %>
+</article>
+<%- include('../partials/fin') %>

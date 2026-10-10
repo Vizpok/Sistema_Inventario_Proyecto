@@ -1,0 +1,69 @@
+<%- include('../partials/inicio') %>
+<% const p = proveedor; %>
+<div>
+  <a class="volver" href="/proveedores"><%- icono('flecha') %> Proveedores</a>
+  <div class="page-head">
+    <div class="detalle-head">
+      <div class="detalle-ico ico-azul"><%- icono('proveedores') %></div>
+      <div>
+        <p class="eyebrow">RFC <span class="mono"><%= p.rfc %></span></p>
+        <h1><%= p.razon_social %></h1>
+        <p class="sub"><%= [p.direccion, p.ciudad].filter(Boolean).join(', ') || 'Sin dirección' %></p>
+      </div>
+    </div>
+    <% if (esAdmin) { %>
+      <div class="acciones">
+        <a class="btn btn-secundario" href="/proveedores/<%= p.id_proveedor %>/editar"><%- icono('editar') %> Editar</a>
+        <form method="post" action="/proveedores/<%= p.id_proveedor %>/estado" class="en-linea" data-confirmar="<%= p.activo ? '¿Desactivar este proveedor?' : '¿Activar este proveedor?' %>">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <button class="btn <%= p.activo ? 'btn-peligro' : 'btn-secundario' %>"><%- icono('power') %> <%= p.activo ? 'Desactivar' : 'Activar' %></button>
+        </form>
+      </div>
+    <% } %>
+  </div>
+</div>
+
+<section class="grid grid-1-2">
+  <article class="card">
+    <header class="card-head"><h2>Datos de contacto</h2><span class="badge <%= p.activo ? 'badge-verde' : 'badge-gris' %>"><%= p.activo ? 'Activo' : 'Inactivo' %></span></header>
+    <dl class="datos datos-1">
+      <div><dt>Contacto</dt><dd><%= p.contacto || '—' %></dd></div>
+      <div><dt>Teléfono</dt><dd><%= p.telefono || '—' %></dd></div>
+      <div><dt>Correo</dt><dd><%= p.correo || '—' %></dd></div>
+      <div><dt>Registrado</dt><dd><%= fecha(p.creado_en) %></dd></div>
+    </dl>
+  </article>
+  <article class="card">
+    <header class="card-head"><div><h2>Productos que surte</h2><p class="sub">Relación N:M <code>producto_proveedor</code></p></div></header>
+    <% if (!productos.length) { %><p class="vacio">No surte productos todavía.</p><% } else { %>
+    <div class="tabla-scroll"><table class="tabla">
+      <thead><tr><th>Producto</th><th class="num">Costo</th><th class="num">Entrega</th><th class="num">Existencia</th><th></th></tr></thead>
+      <tbody><% productos.forEach(x => { %><tr>
+        <td><div class="celda-producto"><a href="/catalogo/<%= x.id_producto %>"><%= x.nombre %></a><span class="muted mono"><%= x.sku %></span></div></td>
+        <td class="num"><%= moneda(x.costo) %></td><td class="num"><%= x.dias_entrega %> d</td>
+        <td class="num"><%= numero(x.existencia_total) %></td>
+        <td><% if (x.es_principal) { %><span class="badge badge-azul badge-simple">Principal</span><% } %></td>
+      </tr><% }) %></tbody>
+    </table></div>
+    <% } %>
+  </article>
+</section>
+
+<article class="card">
+  <header class="card-head"><div><h2>Movimientos con este proveedor</h2><p class="sub">Compras y devoluciones recientes</p></div></header>
+  <% if (!compras.length) { %><p class="vacio">Sin movimientos.</p><% } else { %>
+  <div class="tabla-scroll"><table class="tabla">
+    <thead><tr><th>Folio</th><th>Fecha</th><th>Tipo</th><th>Producto</th><th class="num">Cantidad</th><th class="num">Importe</th><th>Referencia</th></tr></thead>
+    <tbody><% compras.forEach(m => { %><tr>
+      <td><a class="mono" href="/movimientos/<%= m.id_movimiento %>"><%= m.folio %></a></td>
+      <td class="muted"><%= fechaHora(m.fecha) %></td>
+      <td><span class="tipo tipo-<%= m.naturaleza.toLowerCase() %>"><%- icono(m.naturaleza === 'ENTRADA' ? 'entrada' : 'salida') %><%= m.tipo %></span></td>
+      <td><%= m.producto %></td>
+      <td class="num"><%= numero(m.cantidad) %></td>
+      <td class="num"><%= moneda(m.cantidad * m.costo_unitario) %></td>
+      <td class="mono muted"><%= m.referencia || '—' %></td>
+    </tr><% }) %></tbody>
+  </table></div>
+  <% } %>
+</article>
+<%- include('../partials/fin') %>

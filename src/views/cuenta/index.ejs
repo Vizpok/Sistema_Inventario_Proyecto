@@ -1,0 +1,78 @@
+<%- include('../partials/inicio') %>
+<div class="page-head">
+  <div class="detalle-head">
+    <div class="avatar avatar-grande"><%= iniciales(perfil.nombre, perfil.apellidos) %></div>
+    <div>
+      <p class="eyebrow">Mi cuenta</p>
+      <h1><%= perfil.nombre %> <%= perfil.apellidos %></h1>
+      <p class="sub"><%= perfil.puesto || 'Sin puesto' %> · <span class="rol-chip rol-<%= perfil.rol %>"><%= perfil.rol === 'admin' ? 'Administrador' : 'Usuario' %></span></p>
+    </div>
+  </div>
+</div>
+
+<section class="kpis">
+  <article class="kpi"><div class="kpi-ico ico-indigo"><%- icono('movimientos') %></div><div><p class="kpi-etiqueta">Mis movimientos</p><p class="kpi-valor"><%= numero(resumen.total) %></p><p class="kpi-nota">desde el alta en el sistema</p></div></article>
+  <article class="kpi"><div class="kpi-ico ico-verde"><%- icono('entrada') %></div><div><p class="kpi-etiqueta">Entradas</p><p class="kpi-valor"><%= numero(resumen.entradas) %></p></div></article>
+  <article class="kpi"><div class="kpi-ico ico-rojo"><%- icono('salida') %></div><div><p class="kpi-etiqueta">Salidas</p><p class="kpi-valor"><%= numero(resumen.salidas) %></p></div></article>
+  <article class="kpi"><div class="kpi-ico ico-azul"><%- icono('reloj') %></div><div><p class="kpi-etiqueta">Últimos 30 días</p><p class="kpi-valor"><%= numero(resumen.ultimos_30) %></p><p class="kpi-nota">Último acceso: <%= relativo(perfil.ultimo_acceso) %></p></div></article>
+</section>
+
+<section class="grid grid-3">
+  <article class="card">
+    <header class="card-head"><h2>Datos personales</h2></header>
+    <form method="post" action="/mi-cuenta/perfil" class="form">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <label class="campo"><span>Nombre</span><input type="text" name="nombre" value="<%= perfil.nombre %>" required maxlength="80"></label>
+      <label class="campo"><span>Apellidos</span><input type="text" name="apellidos" value="<%= perfil.apellidos %>" required maxlength="100"></label>
+      <label class="campo"><span>Correo</span><input type="email" value="<%= perfil.correo %>" disabled><small>Sólo un administrador puede cambiarlo.</small></label>
+      <button class="btn btn-primario"><%- icono('check') %> Guardar</button>
+    </form>
+  </article>
+  <article class="card" id="seguridad">
+    <header class="card-head"><h2>Cambiar contraseña</h2></header>
+    <form method="post" action="/mi-cuenta/password" class="form">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <label class="campo"><span>Contraseña actual</span><input type="password" name="actual" required autocomplete="current-password"></label>
+      <label class="campo"><span>Nueva contraseña</span><input type="password" name="nueva" required minlength="8" autocomplete="new-password"></label>
+      <label class="campo"><span>Confirmar</span><input type="password" name="confirmar" required minlength="8" autocomplete="new-password"></label>
+      <button class="btn btn-primario"><%- icono('candado') %> Actualizar contraseña</button>
+    </form>
+  </article>
+  <article class="card">
+    <header class="card-head"><h2>Mi actividad reciente</h2></header>
+    <dl class="datos datos-1" style="margin-bottom: 16px">
+      <div><dt>Almacenes a mi cargo</dt><dd><%= perfil.almacenes || 'Ninguno' %></dd></div>
+      <div><dt>Cuenta creada</dt><dd><%= fecha(perfil.creado_en) %></dd></div>
+    </dl>
+    <ul class="lista">
+      <% actividad.forEach(a => { %>
+        <li><div class="lista-principal"><strong><%= a.accion %> · <%= a.modulo %></strong><span class="muted"><%= a.descripcion %></span></div><span class="muted" style="font-size: 12px; white-space: nowrap"><%= relativo(a.fecha) %></span></li>
+      <% }) %>
+    </ul>
+  </article>
+</section>
+
+<article class="card card-sin-padding">
+  <header class="card-head"><div><h2>Movimientos que he registrado</h2></div></header>
+  <div class="tabla-scroll">
+    <table class="tabla">
+      <thead><tr><th>Folio</th><th>Fecha</th><th>Tipo</th><th>Producto</th><th>Almacén</th><th class="num">Cantidad</th><th>Referencia</th></tr></thead>
+      <tbody>
+        <% if (!movs.filas.length) { %><tr><td colspan="7" class="vacio">Aún no registras movimientos.</td></tr><% } %>
+        <% movs.filas.forEach(m => { %>
+          <tr>
+            <td><a class="mono" href="/movimientos/<%= m.id_movimiento %>"><%= m.folio %></a></td>
+            <td class="muted"><%= fechaHora(m.fecha) %></td>
+            <td><span class="tipo tipo-<%= m.naturaleza.toLowerCase() %>"><%- icono(m.naturaleza === 'ENTRADA' ? 'entrada' : 'salida') %><%= m.tipo %></span></td>
+            <td><%= m.producto %></td>
+            <td><%= m.almacen %></td>
+            <td class="num <%= m.naturaleza === 'ENTRADA' ? 'txt-entrada' : 'txt-salida' %>"><%= m.naturaleza === 'ENTRADA' ? '+' : '−' %><%= numero(m.cantidad) %></td>
+            <td class="mono muted"><%= m.referencia || '—' %></td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+  <%- include('../partials/paginacion', { base: '/mi-cuenta', filtrosPag: {}, paginas: movs.paginas, total: movs.totales.registros }) %>
+</article>
+<%- include('../partials/fin') %>

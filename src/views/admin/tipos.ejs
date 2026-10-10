@@ -1,0 +1,45 @@
+<%- include('../partials/inicio') %>
+<% const f = editar || { naturaleza: 'ENTRADA' }; %>
+<div class="page-head">
+  <div><p class="eyebrow">Administración</p><h1>Tipos de movimiento</h1><p class="sub">Catálogo de motivos. La naturaleza (entrada/salida) decide si la función suma o resta existencias.</p></div>
+</div>
+<section class="grid grid-2-1">
+  <article class="card card-sin-padding">
+    <div class="tabla-scroll">
+      <table class="tabla">
+        <thead><tr><th>Tipo</th><th>Naturaleza</th><th>Proveedor</th><th class="num">Usos</th><th>Último uso</th><th></th></tr></thead>
+        <tbody>
+          <% tipos.forEach(t => { %>
+            <tr>
+              <td><div class="celda-producto"><strong><%= t.nombre %></strong><span class="muted"><%= t.descripcion || '' %></span></div></td>
+              <td><span class="tipo tipo-<%= t.naturaleza.toLowerCase() %>"><%- icono(t.naturaleza === 'ENTRADA' ? 'entrada' : 'salida') %><%= t.naturaleza === 'ENTRADA' ? 'Entrada' : 'Salida' %></span></td>
+              <td><%= t.requiere_proveedor ? 'Obligatorio' : 'Opcional' %></td>
+              <td class="num"><%= numero(t.usos) %></td>
+              <td class="muted"><%= relativo(t.ultimo_uso) %></td>
+              <td><a class="btn btn-fantasma btn-sm" href="/admin/tipos?editar=<%= t.id_tipo %>"><%- icono('editar') %></a></td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  </article>
+  <article class="card">
+    <header class="card-head"><h2><%= editar ? 'Editar tipo' : 'Nuevo tipo' %></h2><% if (editar) { %><a class="enlace" href="/admin/tipos">Cancelar</a><% } %></header>
+    <form method="post" action="/admin/tipos" class="form">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <% if (editar) { %><input type="hidden" name="id_tipo" value="<%= f.id_tipo %>"><% } %>
+      <label class="campo"><span>Nombre *</span><input type="text" name="nombre" value="<%= f.nombre || '' %>" required maxlength="40"></label>
+      <label class="campo"><span>Naturaleza</span>
+        <select name="naturaleza" <%= editar && f.usos > 0 ? 'disabled' : '' %>>
+          <option value="ENTRADA" <%= f.naturaleza === 'ENTRADA' ? 'selected' : '' %>>Entrada (+)</option>
+          <option value="SALIDA" <%= f.naturaleza === 'SALIDA' ? 'selected' : '' %>>Salida (−)</option>
+        </select>
+        <% if (editar && f.usos > 0) { %><small>No se puede cambiar: el tipo ya tiene movimientos.</small><% } %>
+      </label>
+      <label class="campo"><span>Descripción</span><input type="text" name="descripcion" value="<%= f.descripcion || '' %>" maxlength="255"></label>
+      <label class="check"><input type="checkbox" name="requiere_proveedor" <%= f.requiere_proveedor ? 'checked' : '' %>> Requiere proveedor</label>
+      <button class="btn btn-primario"><%- icono('check') %> <%= editar ? 'Guardar cambios' : 'Crear tipo' %></button>
+    </form>
+  </article>
+</section>
+<%- include('../partials/fin') %>

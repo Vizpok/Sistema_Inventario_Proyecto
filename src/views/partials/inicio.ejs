@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title><%= titulo %> · Nexo Inventario</title>
+  <link rel="icon" href="/img/logo.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/css/app.css">
+  <script>try { const t = localStorage.getItem('tema'); if (t) document.documentElement.dataset.theme = t; } catch (e) {}</script>
+</head>
+<body>
+<%
+  function enlace(href, ico, texto) {
+    const activo = ruta === href || ruta.startsWith(href + '/');
+%>
+    <a href="<%= href %>" class="nav-link<%= activo ? ' activo' : '' %>"<%- activo ? ' aria-current="page"' : '' %>><%- icono(ico) %><span><%= texto %></span></a>
+<% } %>
+<div class="app">
+  <aside class="sidebar" id="sidebar">
+    <a href="/dashboard" class="marca">
+      <img src="/img/logo.svg" alt="" width="34" height="34">
+      <span><strong>Nexo</strong><small>Inventario</small></span>
+    </a>
+    <nav class="nav">
+      <div class="nav-grupo">Operación</div>
+      <% enlace('/dashboard', 'dashboard', 'Dashboard') %>
+      <% enlace('/inventario', 'inventario', 'Inventario') %>
+      <% enlace('/movimientos', 'movimientos', 'Movimientos') %>
+      <div class="nav-grupo">Catálogos</div>
+      <% enlace('/catalogo', 'catalogo', 'Catálogo de productos') %>
+      <% enlace('/categorias', 'categorias', 'Categorías') %>
+      <% enlace('/proveedores', 'proveedores', 'Proveedores') %>
+      <% if (esAdmin) { %>
+        <div class="nav-grupo">Administración</div>
+        <% enlace('/admin/usuarios', 'usuarios', 'Usuarios') %>
+        <% enlace('/admin/almacenes', 'almacen', 'Almacenes') %>
+        <% enlace('/admin/tipos', 'tipos', 'Tipos de movimiento') %>
+        <% enlace('/admin/bitacora', 'bitacora', 'Bitácora') %>
+        <% enlace('/admin/base-datos', 'basedatos', 'Base de datos') %>
+      <% } %>
+      <div class="nav-grupo">Usuario</div>
+      <% enlace('/mi-cuenta', 'usuario', 'Mi cuenta') %>
+    </nav>
+    <div class="sidebar-pie">
+      <div class="avatar"><%= iniciales(usuario.nombre, usuario.apellidos) %></div>
+      <div class="quien">
+        <strong><%= usuario.nombre %> <%= usuario.apellidos.split(' ')[0] %></strong>
+        <span class="rol-chip rol-<%= usuario.rol %>"><%= usuario.rol === 'admin' ? 'Administrador' : 'Usuario' %></span>
+      </div>
+      <form method="post" action="/logout">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <button class="btn-icono" title="Cerrar sesión" aria-label="Cerrar sesión"><%- icono('salir') %></button>
+      </form>
+    </div>
+  </aside>
+  <div class="velo" data-cerrar-menu></div>
+
+  <div class="principal">
+    <header class="topbar">
+      <button class="btn-icono solo-movil" data-abrir-menu aria-label="Abrir menú"><%- icono('menu') %></button>
+      <form class="buscador" action="/catalogo" method="get" role="search">
+        <%- icono('buscar') %>
+        <input type="search" name="q" placeholder="Buscar producto por nombre o SKU…" aria-label="Buscar producto">
+      </form>
+      <div class="topbar-acciones">
+        <button class="btn-icono" data-tema title="Cambiar tema" aria-label="Cambiar tema"><%- icono('luna') %></button>
+        <a href="/movimientos/nuevo" class="btn btn-primario"><%- icono('mas') %><span class="oculto-movil">Registrar movimiento</span></a>
+      </div>
+    </header>
+    <main class="contenido">
+      <% if (flash) { %>
+        <div class="alerta alerta-<%= flash.tipo %>" role="status">
+          <%- icono(flash.tipo === 'exito' ? 'check' : 'alerta') %><span><%= flash.mensaje %></span>
+        </div>
+      <% } %>

@@ -1,0 +1,34 @@
+<%- include('../partials/inicio') %>
+<div class="page-head">
+  <div><p class="eyebrow">Administración</p><h1>Bitácora</h1><p class="sub">Auditoría de las acciones realizadas en el sistema (tabla <code>bitacora</code>).</p></div>
+</div>
+<form class="filtros" method="get">
+  <label class="campo"><span>Usuario</span>
+    <select name="usuario" data-auto-enviar><option value="">Todos</option><% usuarios.forEach(u => { %><option value="<%= u.id_usuario %>" <%= String(u.id_usuario) === filtros.usuario ? 'selected' : '' %>><%= u.nombre %> <%= u.apellidos %></option><% }) %></select>
+  </label>
+  <label class="campo"><span>Módulo</span>
+    <select name="modulo" data-auto-enviar><option value="">Todos</option><% modulos.forEach(m => { %><option <%= m.modulo === filtros.modulo ? 'selected' : '' %>><%= m.modulo %></option><% }) %></select>
+  </label>
+  <div class="botones"><a class="btn btn-fantasma" href="/admin/bitacora">Limpiar</a></div>
+</form>
+<article class="card card-sin-padding">
+  <div class="tabla-scroll">
+    <table class="tabla">
+      <thead><tr><th>Fecha</th><th>Usuario</th><th>Acción</th><th>Módulo</th><th>Descripción</th></tr></thead>
+      <tbody>
+        <% if (!registros.length) { %><tr><td colspan="5" class="vacio">Sin registros.</td></tr><% } %>
+        <% registros.forEach(r => { %>
+          <tr>
+            <td class="muted" style="white-space: nowrap"><%= fechaHora(r.fecha) %></td>
+            <td><%= r.usuario || 'Sistema' %></td>
+            <td><span class="badge badge-simple <%= ['ELIMINAR', 'DESACTIVAR'].includes(r.accion) ? 'badge-rojo' : ['CREAR', 'REGISTRAR', 'ACTIVAR'].includes(r.accion) ? 'badge-verde' : 'badge-gris' %>"><%= r.accion %></span></td>
+            <td><%= r.modulo %></td>
+            <td><%= r.descripcion %></td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+  <%- include('../partials/paginacion', { base: '/admin/bitacora', filtrosPag: filtros }) %>
+</article>
+<%- include('../partials/fin') %>
