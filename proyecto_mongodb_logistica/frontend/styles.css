@@ -1,0 +1,15 @@
+body { background: #f4f6f9; }
+
+.nav-pills .nav-link.active { background: rgba(255, 255, 255, .25); }
+
+.tarjeta-paquete .card-header { font-family: monospace; font-weight: bold; }
+
+/* Línea de tiempo del historial */
+.timeline { list-style: none; padding-left: 0; border-left: 3px solid #0d6efd; margin-left: .5rem; }
+.timeline li { position: relative; padding: 0 0 1rem 1.25rem; }
+.timeline li::before {
+  content: ""; position: absolute; left: -9px; top: 4px;
+  width: 15px; height: 15px; border-radius: 50%; background: #0d6efd; border: 3px solid #fff;
+}
+.timeline li:last-child::before { background: #198754; }
+.tarjeta-paquete .card-header .badge { font-family: var(--bs-body-font-family); }

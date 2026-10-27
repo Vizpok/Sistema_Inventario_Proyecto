@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Logística Express · Rastreo de paquetes</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <link href="styles.css" rel="stylesheet">
+</head>
+<body>
+
+<!-- Barra superior con las dos pestañas: cliente y administración -->
+<nav class="navbar navbar-dark bg-primary">
+  <div class="container">
+    <span class="navbar-brand"><i class="bi bi-truck"></i> Logística Express</span>
+    <ul class="nav nav-pills">
+      <li class="nav-item"><button class="nav-link active text-white" data-bs-toggle="pill" data-bs-target="#tab-cliente">Rastrear paquete</button></li>
+      <li class="nav-item"><button class="nav-link text-white" data-bs-toggle="pill" data-bs-target="#tab-admin" id="btn-tab-admin">Administración</button></li>
+    </ul>
+  </div>
+</nav>
+
+<main class="container py-4 tab-content">
+
+  <!-- ================= MÓDULO DE CLIENTE ================= -->
+  <section class="tab-pane fade show active" id="tab-cliente">
+    <div class="row justify-content-center">
+      <div class="col-lg-7">
+        <h2 class="h4 mb-3">¿Dónde está mi paquete?</h2>
+        <form id="form-rastreo" class="input-group input-group-lg mb-4">
+          <input id="rastreo-id" class="form-control" placeholder="Código de rastreo, ej. PKG-100002" required>
+          <button class="btn btn-primary"><i class="bi bi-search"></i> Rastrear</button>
+        </form>
+        <div id="resultado-rastreo"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= MÓDULO DE ADMINISTRACIÓN ================= -->
+  <section class="tab-pane fade" id="tab-admin">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h2 class="h4 m-0">Paquetes <span id="contador" class="badge bg-secondary"></span></h2>
+      <button class="btn btn-success" id="btn-nuevo"><i class="bi bi-plus-lg"></i> Nuevo paquete</button>
+    </div>
+
+    <!-- Barra de búsqueda y filtros (se aplican en tiempo real) -->
+    <div class="card card-body mb-3">
+      <div class="row g-2 align-items-center">
+        <div class="col-md-5">
+          <input id="buscar" class="form-control" placeholder="Buscar por tracking, destinatario, ciudad, descripción o etiqueta…">
+        </div>
+        <div class="col-md-3">
+          <select id="filtro-repartidor" class="form-select">
+            <option value="">Todos los repartidores</option>
+          </select>
+        </div>
+        <div class="col-md-4" id="filtro-estados">
+          <!-- Las casillas de estado se generan desde app.js -->
+        </div>
+      </div>
+    </div>
+
+    <div id="lista-paquetes" class="row g-3"></div>
+  </section>
+</main>
+
+<!-- ================= MODAL: crear / editar paquete ================= -->
+<div class="modal fade" id="modal-paquete" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <form class="modal-content" id="form-paquete">
+      <div class="modal-header">
+        <h5 class="modal-title" id="titulo-modal-paquete">Nuevo paquete</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <h6>Remitente</h6>
+            <input class="form-control mb-2" name="rem_nombre" placeholder="Nombre" required>
+            <input class="form-control mb-2" name="rem_telefono" placeholder="Teléfono">
+            <input class="form-control" name="rem_ciudad" placeholder="Ciudad de origen" required>
+          </div>
+          <div class="col-md-6">
+            <h6>Destinatario</h6>
+            <input class="form-control mb-2" name="des_nombre" placeholder="Nombre" required>
+            <input class="form-control mb-2" name="des_telefono" placeholder="Teléfono">
+            <input class="form-control mb-2" name="des_direccion" placeholder="Dirección" required>
+            <input class="form-control" name="des_ciudad" placeholder="Ciudad de destino" required>
+          </div>
+          <div class="col-md-8">
+            <h6>Paquete</h6>
+            <input class="form-control" name="descripcion" placeholder="Descripción del contenido" required>
+          </div>
+          <div class="col-md-4">
+            <h6>Peso (kg)</h6>
+            <input class="form-control" name="peso_kg" type="number" step="0.1" min="0.1" required>
+          </div>
+
+          <!-- Campo dinámico: el repartidor es opcional -->
+          <div class="col-12">
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" id="con-repartidor">
+              <label class="form-check-label" for="con-repartidor">Asignar repartidor</label>
+            </div>
+            <div class="row g-2 mt-1 d-none" id="campos-repartidor">
+              <div class="col-md-6"><input class="form-control" name="rep_nombre" placeholder="Nombre del repartidor"></div>
+              <div class="col-md-6"><input class="form-control" name="rep_vehiculo" placeholder="Vehículo (Moto, Camioneta…)"></div>
+            </div>
+          </div>
+
+          <!-- Campo dinámico: arreglo de etiquetas -->
+          <div class="col-12">
+            <h6>Etiquetas</h6>
+            <div class="input-group mb-2">
+              <input class="form-control" id="nueva-etiqueta" placeholder="ej. frágil, urgente…">
+              <button type="button" class="btn btn-outline-secondary" id="btn-agregar-etiqueta">Agregar</button>
+            </div>
+            <div id="etiquetas-form"></div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button class="btn btn-primary">Guardar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ================= MODAL: agregar evento ================= -->
+<div class="modal fade" id="modal-evento" tabindex="-1">
+  <div class="modal-dialog">
+    <form class="modal-content" id="form-evento">
+      <div class="modal-header">
+        <h5 class="modal-title">Agregar evento · <span id="evento-tracking"></span></h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <label class="form-label">Nuevo estado</label>
+        <select class="form-select mb-2" name="estado" required>
+          <option>En tránsito</option>
+          <option>En reparto</option>
+          <option>Entregado</option>
+          <option>Cancelado</option>
+        </select>
+        <label class="form-label">Ubicación (punto de control)</label>
+        <input class="form-control mb-2" name="ubicacion" required placeholder="ej. Centro de distribución Querétaro">
+        <label class="form-label">Comentario</label>
+        <input class="form-control" name="comentario" placeholder="ej. Retraso por clima">
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button class="btn btn-primary">Agregar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ================= MODAL: historial ================= -->
+<div class="modal fade" id="modal-historial" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Historial de eventos</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body" id="contenido-historial"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Mensajes emergentes -->
+<div class="toast-container position-fixed bottom-0 end-0 p-3">
+  <div id="toast" class="toast text-white border-0"><div class="toast-body" id="toast-texto"></div></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
