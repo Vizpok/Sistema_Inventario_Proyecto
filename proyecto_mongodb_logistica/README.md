@@ -268,5 +268,6 @@ proyecto_mongodb_logistica/
 │   └── styles.css
 └── docs/
     ├── capturas/          ← imágenes del sistema
-    └── Reporte_Proyecto_NoSQL.pdf
+    ├── Reporte_Proyecto_NoSQL.docx  ← reporte completo en Word
+    └── Reporte_Proyecto_NoSQL.pdf   ← el mismo reporte en PDF
 ```
