@@ -29,7 +29,11 @@ async function pedir(url, metodo = "GET", cuerpo = null) {
   if (cuerpo) opciones.body = JSON.stringify(cuerpo);
   const respuesta = await fetch(API + url, opciones);
   const datos = await respuesta.json();
-  if (!respuesta.ok) throw new Error(datos.detail || "Error en la petición");
+  if (!respuesta.ok) {
+    // FastAPI manda el error como texto, o como lista si el JSON no pasó la validación
+    const detalle = Array.isArray(datos.detail) ? "Datos inválidos: revisa el formulario" : datos.detail;
+    throw new Error(detalle || "Error en la petición");
+  }
   return datos;
 }
 
