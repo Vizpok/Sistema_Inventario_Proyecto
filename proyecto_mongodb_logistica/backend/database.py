@@ -18,7 +18,9 @@ if not MONGO_URI:
     raise RuntimeError("Falta MONGO_URI en el archivo .env (copia .env.example a .env)")
 
 # MongoClient abre la conexión con el clúster de Atlas
-cliente = MongoClient(MONGO_URI, tz_aware=True)  # tz_aware: fechas con zona horaria (UTC)
+# tz_aware: fechas con zona horaria (UTC)
+# serverSelectionTimeoutMS: si Atlas no responde en 5 s, marca error en vez de esperar 30 s
+cliente = MongoClient(MONGO_URI, tz_aware=True, serverSelectionTimeoutMS=5000)
 
 # Base de datos y colección que usa todo el sistema
 bd = cliente[NOMBRE_BD]

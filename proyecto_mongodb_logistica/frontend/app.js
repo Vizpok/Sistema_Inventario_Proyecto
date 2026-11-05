@@ -28,7 +28,8 @@ async function pedir(url, metodo = "GET", cuerpo = null) {
   const opciones = { method: metodo, headers: { "Content-Type": "application/json" } };
   if (cuerpo) opciones.body = JSON.stringify(cuerpo);
   const respuesta = await fetch(API + url, opciones);
-  const datos = await respuesta.json();
+  // Un error 500 (por ejemplo, sin conexión a Atlas) no trae JSON
+  const datos = await respuesta.json().catch(() => ({ detail: "No hay conexión con la base de datos (revisa Network Access y el .env)" }));
   if (!respuesta.ok) {
     // FastAPI manda el error como texto, o como lista si el JSON no pasó la validación
     const detalle = Array.isArray(datos.detail) ? "Datos inválidos: revisa el formulario" : datos.detail;
@@ -118,14 +119,18 @@ async function cargarPaquetes() {
   if (repartidor) params.append("repartidor", repartidor);
   document.querySelectorAll(".filtro-estado:checked").forEach(c => params.append("estado", c.value));
 
-  paquetesActuales = await pedir(`/paquetes?${params}`);
-  dibujarPaquetes();
+  try {
+    paquetesActuales = await pedir(`/paquetes?${params}`);
+    dibujarPaquetes();
+  } catch (error) {
+    document.getElementById("lista-paquetes").innerHTML = `<div class="alert alert-danger">${esc(error.message)}</div>`;
+  }
 }
 
 async function cargarRepartidores() {
   const select = document.getElementById("filtro-repartidor");
   const elegido = select.value;
-  const nombres = await pedir("/repartidores");
+  const nombres = await pedir("/repartidores").catch(() => []);
   select.innerHTML = `<option value="">Todos los repartidores</option>` +
     nombres.map(n => `<option ${n === elegido ? "selected" : ""}>${esc(n)}</option>`).join("");
 }
